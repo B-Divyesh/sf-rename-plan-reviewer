@@ -93,6 +93,31 @@ test('demo controls meet mobile touch targets and keep safe spacing', async ({ p
   expect(Math.max(horizontalGap, verticalGap)).toBeGreaterThanOrEqual(8);
 });
 
+test('navigation and legal links meet touch targets and keep safe spacing', async ({ page }) => {
+  await page.goto('/demo/');
+
+  const links = page.locator('.site-nav a, .legal-links a, footer a');
+  await expect(links).toHaveCount(8);
+  const targets = await links.evaluateAll((elements) => elements.map((element) => {
+    const box = element.getBoundingClientRect();
+    return { label: element.textContent?.trim(), width: box.width, height: box.height };
+  }));
+  for (const target of targets) {
+    expect(target.width, `${target.label} target width`).toBeGreaterThanOrEqual(44);
+    expect(target.height, `${target.label} target height`).toBeGreaterThanOrEqual(44);
+  }
+
+  for (const nav of [page.locator('.site-nav'), page.locator('footer nav')]) {
+    const boxes = await nav.locator('a').evaluateAll((elements) => elements.map((element) => {
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right };
+    }));
+    for (let index = 1; index < boxes.length; index += 1) {
+      expect(boxes[index].left - boxes[index - 1].right).toBeGreaterThanOrEqual(8);
+    }
+  }
+});
+
 test('publishes the exact social preview and a visible build identifier', async ({ page }) => {
   const socialUrl = await page.locator('meta[property="og:image"]').getAttribute('content');
   expect(socialUrl).toBe('https://rename-plan-reviewer.sociobot.in/assets/rename-ledger-social.webp');
