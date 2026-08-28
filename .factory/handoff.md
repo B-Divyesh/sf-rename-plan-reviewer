@@ -82,7 +82,41 @@ Production output remains inside the static PWA budgets:
 
 ## Deployment and live identity
 
-Pending the repair-7 evidence commit, static deployment, and live verification.
+The repair-7 evidence commit `8bcf76b54e5986884198e200e44a789fbd4391e4`
+was pushed to `origin/main`. Static deployment
+`14a94a67-d6d1-480e-84dc-c4173f56ca9b` completed successfully from `dist/`
+using `public/staticwebapp.config.json`:
+
+```sh
+/opt/fleet/lib/deploy-static.sh rename-plan-reviewer dist
+# deployment succeeded; custom domain Ready; managed TLS URL returned 200
+
+RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e
+# pass; 50/50 live checks across desktop and 390 px, with no retry
+
+/opt/fleet/lib/verify-url.sh https://rename-plan-reviewer.sociobot.in/ ...
+# HTTP 200; no console/page errors; semantic checks passed
+
+npx @axe-core/cli https://rename-plan-reviewer.sociobot.in/demo/ ...
+# axe-core 4.13.0: 0 violations
+```
+
+The live root has HSTS, `nosniff`, strict-origin referrer policy, restrictive
+CSP, and Permissions-Policy. Hashed JavaScript is one-year immutable; `sw.js`
+is `no-cache`; the manifest has `application/manifest+json` content type.
+`/demo/`, `/privacy/`, `/terms/`, the manifest, robots, and sitemap return 200.
+An unknown route returns the designed HTML 404.
+
+Local production files and live response bodies are byte-identical:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `index.html` | `1a973b7280bf6d64f5f24bd4745c188a3a52c3ddc72bce7245f4dfa6529d70af` |
+| `assets/main-D1EUE9dW.js` | `c3a6097201ccf8b17d552e9165131c964d32bff0f8154a3925c287ad5747acae` |
+| `assets/main-DWHg--M3.css` | `99ab1ae0f374b0954af60f9df952bd7efda30c35407d4977b9fb510cc60e6780` |
+| `sw.js` | `b5118a6d52990d996f486bf25982f652c7868ff78bfabaa1104daf73d54e943f` |
+| `manifest.webmanifest` | `cce39d77046a39d0a4d541d6c83291616fd21f8beee2633d2dd4d92618306abe` |
+| `assets/rename-ledger-social.webp` | `96bc3eeee4d2282ab4aba1ff814e244c532a5a239c96c804bbcb68f593c01ea7` |
 
 ## Known gaps
 
