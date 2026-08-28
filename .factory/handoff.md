@@ -1,43 +1,34 @@
-# Rename Plan Reviewer — build handoff
+# Rename Plan Reviewer — independent verification handoff
 
-## Shipped
+## Status: FAIL
 
-- Complete local-first mapping workflow: CSV/TSV/semicolon import, JSON plan import, and regex-based generation with immediate review.
-- Deterministic checks for duplicate sources/targets, case and Unicode normalization collisions, reserved Windows names, invalid/control/trailing characters, absolute paths, traversal, case-only moves, rename cycles, numbering gaps, and destinations nested under another moving path.
-- Safe two-phase ordering with deterministic temporary paths. Shell and PowerShell exports quote literal paths, preflight every source, unmanaged destination, temporary path, and destination directory, and print only by default. Live commands require an explicit toggle.
-- Reviewed CSV, undo JSON manifest, and optional Plus combined Markdown packet. Free safety checks and individual data/script exports remain ungated.
-- Sociobot one-time license flow: pilot checkout link, callback-token capture, local token/verdict storage, daily verify cap, optimistic cached unlock, background reconciliation, and paste-to-restore. Production API base is set through `VITE_BILLING_BASE`; no product ID is hardcoded.
-- IndexedDB draft persistence with visible save state and user-controlled clearing. No rename path leaves the device.
-- Installable PWA with 192/512/maskable icons, versioned precache, cache-first local assets, network-first navigation/API behavior, offline fallback, and waiting-worker update toast.
-- Handwritten lab-notebook interface, original generated/optimized hero, responsive 390px layout, keyboard operation, strong focus states, reduced-motion behavior, semantic legal pages, and no runtime third parties.
+Candidate `4d0fc67a5208bfe68465ed67e1553149263d0e4d` was independently verified on 2026-08-28 from a clean checkout and against `https://rename-plan-reviewer.sociobot.in/`. Live HTML, JS, service worker, and manifest hashes match the candidate build exactly.
 
-## Verification
+Release is blocked by three S1 defects:
 
-Run from a clean checkout:
+1. Generated shell and PowerShell plans reject ordinary filename-only destinations (`b.txt` is incorrectly checked as directory `b.tx`), so the core exported plan does not run.
+2. Absolute and parent-relative source paths are labeled safe and can move files outside the reviewed root; Windows backslash-absolute destinations are also missed.
+3. The installed live PWA cannot reload offline because its network-only `*.sociobot.in` service-worker branch also captures its own production origin.
+
+Major additional defects: quoted filename whitespace is silently trimmed; keyboard users cannot reach the regex tab and file-import focus is effectively invisible; case-insensitive moving-parent dependencies are missed; and the live Buy Plus checkout returns 404. Deployment caching/policy and 1,000-row responsiveness gaps are documented in the full report.
+
+## Verification run
 
 ```sh
 npm ci
 npm test
 npm run build
+npm audit --audit-level=low
 ```
 
-Verified 2026-08-28 in Chromium:
+All repository commands passed: 9 unit tests, 6 desktop/mobile Playwright tests, TypeScript checking, exact Vite/service-worker build, and 0 known dependency vulnerabilities. No lint script is declared. Passing tests do not cover the blockers above.
 
-- Unit: 9 tests passed, including swaps, duplicate targets, reserved names, unsafe paths, Unicode collision, nested moving parents, regex input, quoting, and 1,000 safe mappings with 1,000 unique temporary paths.
-- Browser: 6 tests passed across desktop Chromium and Pixel 5 (keyboard skip path, serious/critical axe scan, risky-to-safe workflow, file download, no console errors, no mobile overflow).
-- Offline: service-worker-controlled app reloaded and completed a review with the browser network disabled on desktop and mobile.
-- Production build: `dist/index.html` present; initial JS 32.81 KB raw / 12.27 KB gzip; CSS 13.94 KB raw / 3.95 KB gzip; hero WebP 25.6 KB.
-- Lighthouse mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 92; LCP 1.5 s, CLS 0, total blocking time 30 ms (local preview, headless Chromium). INP has no meaningful lab sample; TBT is recorded as its lab responsiveness proxy.
-- `npm audit`: 0 known vulnerabilities.
+Independent browser/product checks covered desktop and 390 px mobile, normal/invalid/recovery inputs, CSV/JSON import, regex, persistence/clear, 1,000 mappings, download contents, controlled shell execution, axe, keyboard/focus, reduced motion, console/page errors, privacy/outbound requests, legal pages, manifest/installability, service-worker update/offline behavior, headers/caching, build/live hashes, and Lighthouse.
 
-## Known limits
+Live Lighthouse mobile: Performance 94, Accessibility 100, Best Practices 100, SEO 100; LCP 1.11 s, CLS 0, TBT 292 ms. Bundles remain within static budgets: 32,811-byte raw JS, 13,941-byte raw CSS, 25,560-byte hero WebP.
 
-- The browser intentionally cannot inspect the real filesystem. A plan can only reason about supplied mappings; exported scripts perform real-state preflight immediately before any move.
-- The generated script stops on an unexpected runtime failure but does not automatically roll back a partially completed phase. The deterministic temp names and undo manifest support recovery; keep a backup for irreplaceable data.
-- Numbering-gap detection recognizes the final numeric run in a destination and groups equal prefixes/suffixes and digit widths. More domain-specific numbering conventions remain a manual review.
-- Checkout stays on the pilot API until deployment supplies the production `VITE_BILLING_BASE` and the factory registers the product.
+## Next action
 
-## Next steps
+Fix the S1/S2 defects and add real script-execution, production-host offline, source-boundary, quoted-whitespace, and keyboard-tab regression tests. Register/enable the Sociobot product and build the public release with the production billing base. Then request a fresh verification.
 
-- Factory: register the paid product, set the production billing base, and deploy `dist/`.
-- Optionally add signed checksums to exported review packets if teams begin passing plans between reviewers.
+Full evidence and exact reproductions: [`.factory/verification.md`](verification.md).
