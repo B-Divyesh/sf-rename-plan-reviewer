@@ -124,3 +124,27 @@ is 15.34 KB raw / 4.19 KB gzip.
 Static deployment uses `/opt/fleet/lib/deploy-static.sh rename-plan-reviewer dist`.
 Post-deployment live identity and browser verification are recorded below once
 the static deployment finishes.
+
+Deployment `9a8284e7-6441-43d0-907c-5dc69a7ee16a` completed successfully to
+`https://rename-plan-reviewer.sociobot.in/`. The domain returned HTTPS 200.
+
+```sh
+/opt/fleet/lib/verify-url.sh https://rename-plan-reviewer.sociobot.in/ <evidence-dir>
+# GET -> 200; load 643 ms; no console/page errors
+# title present; lang=en; h1=1; main=true; missing img alts=0; unlabeled buttons=0
+
+RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e
+# 42/42 live desktop and 390px tests passed
+```
+
+Local production output and live response bodies matched exactly:
+
+| File | SHA-256 |
+| --- | --- |
+| `index.html` | `6d87d26da1767a0fb76e5f06eac4080f10f41599286e00d7d394122b49111fc1` |
+| `sw.js` | `c61ea2d76176f78ac184a29ecb8d35b5a5fea0d6aed4280d6d4fd48ca9a1c9da` |
+| `manifest.webmanifest` | `cce39d77046a39d0a4d541d6c83291616fd21f8beee2633d2dd4d92618306abe` |
+
+The live worker response is `text/javascript` with `Cache-Control: no-cache`.
+The live CSP, referrer policy and `X-Content-Type-Options: nosniff` headers
+also match the static configuration.
