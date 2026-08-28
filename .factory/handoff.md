@@ -92,8 +92,39 @@ Static deployment uses `dist/` and
 /opt/fleet/lib/deploy-static.sh rename-plan-reviewer dist
 ```
 
-Deployment and live SHA/browser evidence will be appended after the committed
-repair is pushed and the static deployment completes.
+Repair commit `64452bf` was pushed to `origin/main`, then deployment
+`2ca6d198-9126-41fa-aeec-c6cd84706a62` completed successfully. The custom
+domain is Ready and <https://rename-plan-reviewer.sociobot.in/> returns HTTPS
+200 with managed TLS.
+
+```sh
+/opt/fleet/lib/verify-url.sh https://rename-plan-reviewer.sociobot.in/ /tmp/rpr-verify-live
+# HTTP 200; 895ms; no console/page errors; title/lang/one h1/main/alt/labels pass
+
+RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e
+# pass; 46/46 live desktop and 390px tests
+
+npx @axe-core/cli https://rename-plan-reviewer.sociobot.in/demo/ ...
+# axe-core 4.13.0: 0 violations
+```
+
+Local production output and live response bodies are byte-identical:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `index.html` | `fefdb29efa411bc35af29f0f995c5d37cc9a5b237e52c33b802abe76961948dc` |
+| `assets/main-BSq2Hg9x.js` | `9d57055ef657dd0a5654078b2ccb33168b57aaa70b1c89dd4292e9b19b131764` |
+| `assets/main-DWHg--M3.css` | `99ab1ae0f374b0954af60f9df952bd7efda30c35407d4977b9fb510cc60e6780` |
+| `sw.js` | `1147745e876a06e858e86e298e45a1c2e95f13c398d278ba5f548e40bcc26f28` |
+| `manifest.webmanifest` | `cce39d77046a39d0a4d541d6c83291616fd21f8beee2633d2dd4d92618306abe` |
+| `assets/rename-ledger-social.webp` | `96bc3eeee4d2282ab4aba1ff814e244c532a5a239c96c804bbcb68f593c01ea7` |
+
+Live response policy is correct: HSTS, `nosniff`, strict-origin referrer
+policy, restrictive CSP, and Permissions-Policy are present; hashed assets are
+one-year immutable; the social image is `image/webp` with a one-day cache; the
+manifest is `application/manifest+json`; and `sw.js` remains revalidatable.
+`/demo/`, `/privacy/`, `/terms/`, `robots.txt`, `sitemap.xml`, and the manifest
+return 200. An unknown route returns the designed HTML 404.
 
 ## Known gaps
 
