@@ -1,0 +1,14 @@
+{
+  "url": "https://rename-plan-reviewer.sociobot.in/",
+  "loadMs": 1490,
+  "errors": [],
+  "a11y": {
+    "title": "Rename Plan Reviewer — review batch renames",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 2015
+  }
+}

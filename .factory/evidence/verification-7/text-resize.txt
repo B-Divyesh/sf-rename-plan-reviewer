@@ -1,0 +1,35 @@
+{
+  "viewport": 390,
+  "scrollWidth": 732,
+  "h1": {
+    "width": 326,
+    "scrollWidth": 326
+  },
+  "controls": [
+    {
+      "name": null,
+      "width": 0,
+      "height": 0
+    },
+    {
+      "name": null,
+      "width": 0,
+      "height": 0
+    },
+    {
+      "name": null,
+      "width": 0,
+      "height": 0
+    },
+    {
+      "name": "globalglobal + ignore caseignore casenone",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "name": "Portable (strictest)WindowsmacOSLinux",
+      "width": 0,
+      "height": 84.1875
+    }
+  ]
+}

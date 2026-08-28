@@ -1,0 +1,21 @@
+{
+  "result": "pass",
+  "viewport": "390x844",
+  "covered": [
+    "empty state",
+    "invalid regex and recovery",
+    "regex rule",
+    "semicolon input",
+    "tab input",
+    "valid JSON import",
+    "malformed CSV and recovery",
+    "dry shell",
+    "PowerShell",
+    "undo JSON",
+    "CSV",
+    "draft persistence",
+    "clear and empty recovery"
+  ],
+  "externalRequests": [],
+  "browserErrors": []
+}

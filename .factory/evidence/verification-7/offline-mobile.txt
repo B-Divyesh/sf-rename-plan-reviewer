@@ -1,0 +1,89 @@
+
+> rename-plan-reviewer@1.0.2 test:offline:mobile
+> npm run build && playwright test tests/e2e/offline.spec.ts --project=mobile-390-chromium --workers=1 --repeat-each=10
+
+
+> rename-plan-reviewer@1.0.2 build
+> tsc --noEmit && vite build && node scripts/build-sw.mjs
+
+vite v6.4.3 building for production...
+transforming...
+✓ 14 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/terms/index.html           0.62 kB │ gzip:  0.38 kB
+dist/privacy/index.html         0.63 kB │ gzip:  0.39 kB
+dist/404/index.html             0.69 kB │ gzip:  0.40 kB
+dist/demo/index.html            0.97 kB │ gzip:  0.51 kB
+dist/index.html                 2.01 kB │ gzip:  0.69 kB
+dist/assets/main-DCFLyqXe.css  15.52 kB │ gzip:  4.22 kB
+dist/assets/main-asEGVDlZ.js   36.39 kB │ gzip: 13.38 kB │ map: 86.05 kB
+✓ built in 556ms
+service worker rpr-a102e45c27: 17 files precached
+[2m[WebServer] [22m(node:4688) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 20 tests using 1 worker
+
+(node:4706) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4706) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (2.2s)
+  ✓   2 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.5s)
+(node:4788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   3 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.9s)
+  ✓   4 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.5s)
+(node:4869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4869) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   5 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.9s)
+  ✓   6 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.5s)
+(node:4950) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4950) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   7 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.9s)
+  ✓   8 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.4s)
+(node:5030) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5030) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   9 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.8s)
+  ✓  10 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.6s)
+(node:5140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  11 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.9s)
+  ✓  12 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.6s)
+(node:5218) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5218) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  13 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.8s)
+  ✓  14 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.5s)
+(node:5299) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5299) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  15 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.8s)
+  ✓  16 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.4s)
+(node:5378) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5378) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  17 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.8s)
+  ✓  18 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.5s)
+(node:5461) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5461) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  19 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.9s)
+  ✓  20 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.5s)
+
+  20 passed (51.5s)

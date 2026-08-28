@@ -1,0 +1,42 @@
+[
+  {
+    "elapsed": 77.89999999990687,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 83.69999999995343,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 39.699999999953434,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 46.200000000186265,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 44,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 46,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 39.4000000001397,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 55.10000000009313,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 52.60000000009313,
+    "text": "1,000 mappings checked; first 100 shown below"
+  },
+  {
+    "elapsed": 48.60000000009313,
+    "text": "1,000 mappings checked; first 100 shown below"
+  }
+]

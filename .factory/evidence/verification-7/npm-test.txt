@@ -1,0 +1,100 @@
+
+> rename-plan-reviewer@1.0.2 test
+> vitest run && npm run build && playwright test
+
+
+ RUN  v4.1.11 /work/repo
+
+
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+   Start at  15:49:58
+   Duration  779ms (transform 320ms, setup 0ms, import 509ms, tests 96ms, environment 0ms)
+
+
+> rename-plan-reviewer@1.0.2 build
+> tsc --noEmit && vite build && node scripts/build-sw.mjs
+
+vite v6.4.3 building for production...
+transforming...
+✓ 14 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/terms/index.html           0.62 kB │ gzip:  0.38 kB
+dist/privacy/index.html         0.63 kB │ gzip:  0.39 kB
+dist/404/index.html             0.69 kB │ gzip:  0.40 kB
+dist/demo/index.html            0.97 kB │ gzip:  0.51 kB
+dist/index.html                 2.01 kB │ gzip:  0.69 kB
+dist/assets/main-DCFLyqXe.css  15.52 kB │ gzip:  4.22 kB
+dist/assets/main-asEGVDlZ.js   36.39 kB │ gzip: 13.38 kB │ map: 86.05 kB
+✓ built in 544ms
+service worker rpr-a102e45c27: 17 files precached
+[2m[WebServer] [22m(node:2640) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 52 tests using 1 worker
+
+(node:2659) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2659) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [desktop-chromium] › tests/e2e/app.spec.ts:17:1 › reviews risky input, fixes it, and downloads a dry-run plan (2.0s)
+  ✓   2 [desktop-chromium] › tests/e2e/app.spec.ts:34:1 › blocks root escapes, preserves quoted whitespace, and finds case-folded parents (1.8s)
+  ✓   3 [desktop-chromium] › tests/e2e/app.spec.ts:51:1 › keyboard path and accessibility have no serious violations (3.5s)
+  ✓   4 [desktop-chromium] › tests/e2e/app.spec.ts:78:1 › demo controls meet mobile touch targets and keep safe spacing (1.4s)
+  ✓   5 [desktop-chromium] › tests/e2e/app.spec.ts:96:1 › navigation and legal links meet touch targets and keep safe spacing (1.3s)
+  ✓   6 [desktop-chromium] › tests/e2e/app.spec.ts:121:1 › publishes the exact social preview and a visible build identifier (880ms)
+  ✓   7 [desktop-chromium] › tests/e2e/app.spec.ts:137:1 › reviews 1,000 mappings within the interaction budget (1.1s)
+  ✓   8 [desktop-chromium] › tests/e2e/app.spec.ts:149:1 › keeps plans local and uses only the production API for license verification (1.6s)
+  ✓   9 [desktop-chromium] › tests/e2e/app.spec.ts:170:1 › privacy and terms pages remain semantic and accessible (3.1s)
+  ✓  10 [desktop-chromium] › tests/e2e/app.spec.ts:181:1 › offers and applies an installed service-worker update (2.7s)
+  ✓  11 [desktop-chromium] › tests/e2e/app.spec.ts:192:1 › loaded app remains usable offline (2.3s)
+  ✓  12 [desktop-chromium] › tests/e2e/claims.spec.ts:4:1 › @claim:risky-sample-review shows the supplied risky plan on the direct demo route (1.0s)
+  ✓  13 [desktop-chromium] › tests/e2e/claims.spec.ts:15:1 › @claim:demo-isolated keeps demo changes out of the real draft (2.5s)
+  ✓  14 [desktop-chromium] › tests/e2e/claims.spec.ts:30:1 › @claim:local-only sends no request away from this site while reviewing demo data (763ms)
+  ✓  15 [desktop-chromium] › tests/e2e/claims.spec.ts:44:1 › @claim:dry-run-export downloads a plan that prints commands instead of renaming files (1.9s)
+  ✓  16 [desktop-chromium] › tests/e2e/claims.spec.ts:54:1 › @claim:plus-offer-status proves the stated Plus package and existing-license restore path (2.5s)
+  ✓  17 [desktop-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.6s)
+  ✓  18 [desktop-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.8s)
+  ✓  19 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:8:1 › live UI export executes a quoted swap and is reversible (2.3s)
+  ✓  20 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:33:1 › live UI export canonicalizes portable backslashes and repeated-separator dependencies (3.1s)
+Destination already exists: folder/
+  ✓  21 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:79:1 › observe directory-only destination changes rename semantics (2.4s)
+  ✓  22 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:100:1 › structurally invalid JSON import recovers without an uncaught page error (1.1s)
+  ✓  23 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:110:1 › Plus packet follows the script safety gate and exports only a safe plan (3.3s)
+  ✓  24 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:136:1 › desktop and 390 mobile states meet semantics, axe, motion, focus, and no-overflow checks (6.0s)
+  ✓  25 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:165:1 › the populated 390px demo findings region is keyboard-scrollable and has no serious axe findings (2.2s)
+  ✓  26 [desktop-chromium] › tests/e2e/qa-temp.spec.ts:179:1 › manifest has no Chromium installability errors (693ms)
+(node:3130) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3130) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  27 [mobile-390-chromium] › tests/e2e/app.spec.ts:17:1 › reviews risky input, fixes it, and downloads a dry-run plan (1.6s)
+  ✓  28 [mobile-390-chromium] › tests/e2e/app.spec.ts:34:1 › blocks root escapes, preserves quoted whitespace, and finds case-folded parents (1.4s)
+  ✓  29 [mobile-390-chromium] › tests/e2e/app.spec.ts:51:1 › keyboard path and accessibility have no serious violations (3.1s)
+  ✓  30 [mobile-390-chromium] › tests/e2e/app.spec.ts:78:1 › demo controls meet mobile touch targets and keep safe spacing (1.1s)
+  ✓  31 [mobile-390-chromium] › tests/e2e/app.spec.ts:96:1 › navigation and legal links meet touch targets and keep safe spacing (1.2s)
+  ✓  32 [mobile-390-chromium] › tests/e2e/app.spec.ts:121:1 › publishes the exact social preview and a visible build identifier (734ms)
+  ✓  33 [mobile-390-chromium] › tests/e2e/app.spec.ts:137:1 › reviews 1,000 mappings within the interaction budget (958ms)
+  ✓  34 [mobile-390-chromium] › tests/e2e/app.spec.ts:149:1 › keeps plans local and uses only the production API for license verification (1.3s)
+  ✓  35 [mobile-390-chromium] › tests/e2e/app.spec.ts:170:1 › privacy and terms pages remain semantic and accessible (2.5s)
+  ✓  36 [mobile-390-chromium] › tests/e2e/app.spec.ts:181:1 › offers and applies an installed service-worker update (2.4s)
+  ✓  37 [mobile-390-chromium] › tests/e2e/app.spec.ts:192:1 › loaded app remains usable offline (1.9s)
+  ✓  38 [mobile-390-chromium] › tests/e2e/claims.spec.ts:4:1 › @claim:risky-sample-review shows the supplied risky plan on the direct demo route (846ms)
+  ✓  39 [mobile-390-chromium] › tests/e2e/claims.spec.ts:15:1 › @claim:demo-isolated keeps demo changes out of the real draft (2.1s)
+  ✓  40 [mobile-390-chromium] › tests/e2e/claims.spec.ts:30:1 › @claim:local-only sends no request away from this site while reviewing demo data (653ms)
+  ✓  41 [mobile-390-chromium] › tests/e2e/claims.spec.ts:44:1 › @claim:dry-run-export downloads a plan that prints commands instead of renaming files (1.0s)
+  ✓  42 [mobile-390-chromium] › tests/e2e/claims.spec.ts:54:1 › @claim:plus-offer-status proves the stated Plus package and existing-license restore path (2.1s)
+  ✓  43 [mobile-390-chromium] › tests/e2e/offline.spec.ts:4:1 › 390px loaded app remains usable offline after a controlled reload (1.5s)
+  ✓  44 [mobile-390-chromium] › tests/e2e/offline.spec.ts:13:1 › @claim:offline-reload reloads the demo after its first controlled visit without a connection (1.4s)
+  ✓  45 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:8:1 › live UI export executes a quoted swap and is reversible (2.6s)
+  ✓  46 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:33:1 › live UI export canonicalizes portable backslashes and repeated-separator dependencies (4.8s)
+Destination already exists: folder/
+  ✓  47 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:79:1 › observe directory-only destination changes rename semantics (2.6s)
+  ✓  48 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:100:1 › structurally invalid JSON import recovers without an uncaught page error (1.1s)
+  ✓  49 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:110:1 › Plus packet follows the script safety gate and exports only a safe plan (3.4s)
+  ✓  50 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:136:1 › desktop and 390 mobile states meet semantics, axe, motion, focus, and no-overflow checks (8.4s)
+  ✓  51 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:165:1 › the populated 390px demo findings region is keyboard-scrollable and has no serious axe findings (2.2s)
+  ✓  52 [mobile-390-chromium] › tests/e2e/qa-temp.spec.ts:179:1 › manifest has no Chromium installability errors (529ms)
+
+  52 passed (1.9m)

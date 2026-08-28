@@ -1,0 +1,4 @@
+
+> rename-plan-reviewer@1.0.2 lint
+> tsc --noEmit
+

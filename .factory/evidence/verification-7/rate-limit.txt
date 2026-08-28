@@ -1,0 +1,5 @@
+
+> rename-plan-reviewer@1.0.2 verify:billing-rate-limit
+> node scripts/verify-billing-rate-limit.mjs
+
+{"requests":240,"statusCounts":{"200":30,"429":210},"retryAfterOn429":210}

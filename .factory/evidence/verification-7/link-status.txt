@@ -1,0 +1,12 @@
+200 https://github.com/B-Divyesh/sf-rename-plan-reviewer
+200 https://rename-plan-reviewer.sociobot.in/
+200 https://rename-plan-reviewer.sociobot.in/#main
+404 https://rename-plan-reviewer.sociobot.in/definitely-missing-verification-7#main
+200 https://rename-plan-reviewer.sociobot.in/demo/
+200 https://rename-plan-reviewer.sociobot.in/demo/#main
+200 https://rename-plan-reviewer.sociobot.in/privacy/
+200 https://rename-plan-reviewer.sociobot.in/privacy/#main
+200 https://rename-plan-reviewer.sociobot.in/terms/
+200 https://rename-plan-reviewer.sociobot.in/terms/#main
+SKIP mailto:privacy@sociobot.in
+SKIP mailto:support@sociobot.in
