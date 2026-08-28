@@ -1,6 +1,6 @@
 # Rename Plan Reviewer — polish round 1 handoff
 
-## Status: repaired and ready to deploy
+## Status: repaired, deployed, and live-checked
 
 This repair resolves every blocking, major, and minor item in
 `.factory/review-1.md` (F-1-1 through F-1-32), while retaining the warm
@@ -68,5 +68,23 @@ npm run build
 
 ## Known gaps
 
-None. The final static deployment ID and cold live re-check are recorded in
-this handoff after the work-order deploy completes.
+## Deployment and cold live re-check
+
+- Azure Static Web Apps deployment: `aa20c6d9-0259-4803-92be-796477421e7a`.
+- The production host now serves the repaired asset
+  `main-CiJ8jX0n.js`; an unknown route returns HTTP 404 with the designed
+  404 document.
+- `RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e`:
+  78/78 pass. Output: `.factory/evidence/polish-1/live-e2e.txt`.
+- `/opt/fleet/lib/verify-url.sh` cold checks passed for `/`, `/demo/`,
+  `/?demo=1`, `/privacy/`, and `/terms/`: HTTP 200, no console/page errors,
+  route title, `lang=en`, one h1, one main, alt text, and named buttons.
+  Desktop and 390 px captures/JSON are in `.factory/evidence/polish-1/live-*`.
+- Cold mobile inspection of `/demo/` confirms the banner, seeded paths,
+  “Plan needs correction” verdict, findings, no horizontal overflow, and
+  usable 44 px controls in the first screen. The capture is
+  `.factory/evidence/polish-1/live-demo/screenshot-mobile.png`.
+
+## Known gaps
+
+None.

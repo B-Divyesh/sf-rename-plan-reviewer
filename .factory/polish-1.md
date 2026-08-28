@@ -3,6 +3,10 @@
 This repair starts from review commit `3391d4119043b6a5a2b5aab3782924514352ad34`.
 Evidence paths are committed under `.factory/evidence/polish-1/`. The direct
 sample URL is `/?demo=1`; the catalog and landing action use `/demo/`.
+All rows also have the cold live browser evidence in `live-e2e.txt` and the
+route captures in `live-root/`, `live-demo/`, `live-query-demo/`,
+`live-privacy/`, and `live-terms/`; those captures include desktop and 390 px
+screenshots plus console/a11y reports.
 
 | Finding | Change made | Evidence |
 | --- | --- | --- |
