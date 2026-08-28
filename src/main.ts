@@ -7,23 +7,32 @@ import { clearDraft, loadDraft, saveDraft } from './storage';
 import type { Assumptions, Draft, Finding, RenameRow, Severity } from './types';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
+const DEMO_NAMESPACE = 'demo:';
+const SAMPLE_INPUT = 'current,new\nphotos/a.jpg,photos/b.jpg\nphotos/b.jpg,photos/a.jpg\nscan-001.tif,archive/scan-001.tif\nscan-002.tif,archive/scan-003.tif\nnotes.txt,CON.txt';
+
+function isDemoRoute(): boolean {
+  return location.pathname === '/demo' || location.pathname === '/demo/' || new URLSearchParams(location.search).get('demo') === '1';
+}
 
 function renderLegal(page: 'privacy' | 'terms'): void {
+  document.title = `${page === 'privacy' ? 'Privacy' : 'Terms'} — Rename Plan Reviewer`;
   const privacy = `<p><strong>Effective 28 August 2026.</strong></p><p>Your rename mappings, rule inputs, and draft are processed on this device. The app stores the current draft in your browser’s IndexedDB so it survives a refresh. Rename paths are never uploaded to us.</p><p>If you buy or verify a Plus license, your browser contacts the Sociobot billing API with the license token. Sociobot/Dodo acts as merchant of record and handles payment data; this app never receives card details. The license token and a daily verification result are stored in localStorage.</p><p>The service worker caches application files for offline use. There is no advertising, behavioral analytics, third-party font, or tracking script.</p><p>You can erase the plan with “Clear desk” and remove the app’s site data in browser settings. Questions: <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p>`;
   const terms = `<p><strong>Effective 28 August 2026.</strong></p><p>Rename Plan Reviewer analyzes a proposed mapping and generates scripts; it does not inspect your filesystem or guarantee that the filesystem is unchanged since review. Read the findings, keep a backup, run the dry-run plan, and verify the output before enabling live commands.</p><p>The free reviewer includes safety checks and individual exports. Rename Plan Reviewer Plus is a one-time US $12 purchase that adds convenience features described at purchase. Sociobot/Dodo is the merchant of record. Refunds are handled by the merchant and revoke the associated license.</p><p>The software is provided under the MIT License, without warranty. You remain responsible for the commands you run and for maintaining backups. Do not use generated scripts where you lack permission to rename the files.</p><p>These terms are governed by applicable law. Questions: <a href="mailto:support@sociobot.in">support@sociobot.in</a>.</p>`;
-  app.innerHTML = `<header class="site-head"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">↝</span> Rename Plan Reviewer</a></header><main id="main" tabindex="-1" class="legal-page"><p class="eyebrow">FIELD NOTE / ${page === 'privacy' ? 'PRIVACY' : 'TERMS'}</p><h1>${page === 'privacy' ? 'Your paths stay on your desk.' : 'Review first. Keep a backup.'}</h1>${page === 'privacy' ? privacy : terms}<p><a href="/">← Return to the reviewer</a></p></main>${footer()}`;
+  app.innerHTML = `${header()}<main id="main" tabindex="-1" class="legal-page"><p class="eyebrow">FIELD NOTE / ${page === 'privacy' ? 'PRIVACY' : 'TERMS'}</p><h1>${page === 'privacy' ? 'Your paths stay on your desk.' : 'Review first. Keep a backup.'}</h1>${page === 'privacy' ? privacy : terms}<p><a href="/">← Return to the reviewer</a></p></main>${footer()}`;
 }
 
 const DEFAULT_ASSUMPTIONS: Assumptions = { caseInsensitive: true, unicode: 'NFC', platform: 'portable' };
 const DEFAULT_DRAFT: Draft = { version: 1, mode: 'csv', input: '', sourceList: '', pattern: '', replacement: '', flags: 'g', delimiter: ',', assumptions: DEFAULT_ASSUMPTIONS, liveCommands: false, updatedAt: new Date().toISOString() };
 
-async function startApp(): Promise<void> {
-  captureLicense();
-  app.innerHTML = shell();
-  let draft = DEFAULT_DRAFT;
-  let storageMessage = 'Drafts stay on this device.';
-  try {
-    const saved = await loadDraft();
+async function startApp(demo = isDemoRoute()): Promise<void> {
+  const storageNamespace = demo ? DEMO_NAMESPACE : '';
+  if (!demo) captureLicense();
+  document.title = demo ? 'Demo — Rename Plan Reviewer' : 'Rename Plan Reviewer — review batch renames';
+  app.innerHTML = shell(demo);
+  let draft = demo ? sampleDraft() : DEFAULT_DRAFT;
+  let storageMessage = demo ? 'Sample plan is stored only in this demo.' : 'Drafts stay on this device.';
+  if (!demo) try {
+    const saved = await loadDraft(storageNamespace);
     if (saved?.version === 1) {
       draft = saved;
       storageMessage = `Restored local draft from ${new Date(saved.updatedAt).toLocaleString()}.`;
@@ -31,7 +40,7 @@ async function startApp(): Promise<void> {
   } catch {
     storageMessage = 'Local saving is unavailable in this browser session.';
   }
-  let unlocked = cachedUnlock();
+  let unlocked = demo ? false : cachedUnlock();
   let activeFilter: Severity | 'all' = 'all';
   let parseErrors: string[] = [];
   let rows: RenameRow[] = [];
@@ -96,7 +105,7 @@ async function startApp(): Promise<void> {
     saveTimer = window.setTimeout(async () => {
       try {
         const value = currentDraft();
-        await saveDraft(value);
+        await saveDraft(value, storageNamespace);
         storageStatus.textContent = `Saved locally at ${new Date(value.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`;
       } catch {
         storageStatus.textContent = 'Could not save this draft locally. Export it before closing.';
@@ -153,17 +162,31 @@ async function startApp(): Promise<void> {
 
   $('#load-example').addEventListener('click', () => {
     setMode('csv');
-    csvInput.value = 'current,new\nphotos/a.jpg,photos/b.jpg\nphotos/b.jpg,photos/a.jpg\nscan-001.tif,archive/scan-001.tif\nscan-002.tif,archive/scan-003.tif\nnotes.txt,CON.txt';
+    csvInput.value = SAMPLE_INPUT;
     update();
     csvInput.focus();
   });
+  if (demo) {
+    const resetDemo = async () => {
+      await clearDraft(storageNamespace).catch(() => undefined);
+      csvInput.value = SAMPLE_INPUT;
+      sourceInput.value = patternInput.value = replacementInput.value = '';
+      liveInput.checked = false;
+      setMode('csv');
+      queueSave();
+      storageStatus.textContent = 'Sample plan reset. It is stored only in this demo.';
+      csvInput.focus();
+    };
+    $('#reset-demo').addEventListener('click', () => { void resetDemo(); });
+    $('#reset-demo-hero').addEventListener('click', () => { void resetDemo(); });
+  }
   $('#clear-plan').addEventListener('click', async () => {
     if (rows.length && !confirm(`Clear ${rows.length} mappings from this device? Exported files will not be affected.`)) return;
     Object.assign(draft, DEFAULT_DRAFT);
     csvInput.value = sourceInput.value = patternInput.value = replacementInput.value = '';
     setMode('csv');
-    await clearDraft().catch(() => undefined);
-    storageStatus.textContent = 'Local draft cleared.';
+    await clearDraft(storageNamespace).catch(() => undefined);
+    storageStatus.textContent = demo ? 'Demo sample cleared. Reset it to bring the sample back.' : 'Local draft cleared.';
     review();
   });
   $('#file-input').addEventListener('change', async (event) => {
@@ -200,7 +223,7 @@ async function startApp(): Promise<void> {
   }));
 
   function paintLicense(message?: string): void {
-    unlocked = cachedUnlock() || unlocked;
+    unlocked = (!demo && cachedUnlock()) || unlocked;
     packetButton.disabled = !unlocked || !reviewIsSafe;
     plusState.textContent = message ?? (unlocked
       ? (reviewIsSafe ? 'Plus is active on this device.' : 'Resolve error findings before exporting a review packet with scripts.')
@@ -208,7 +231,7 @@ async function startApp(): Promise<void> {
     $('#buy-plus').toggleAttribute('hidden', unlocked);
   }
   paintLicense();
-  void verifyLicense().then((verdict) => {
+  if (!demo) void verifyLicense().then((verdict) => {
     if (!verdict) return;
     unlocked = verdict.valid;
     paintLicense(verdict.valid ? 'Plus license verified.' : 'License no longer active. Free review and exports remain available.');
@@ -249,13 +272,21 @@ async function startApp(): Promise<void> {
   }
 }
 
-function shell(): string {
+function sampleDraft(): Draft {
+  return { ...DEFAULT_DRAFT, assumptions: { ...DEFAULT_ASSUMPTIONS }, input: SAMPLE_INPUT, updatedAt: new Date().toISOString() };
+}
+
+function header(): string {
+  return `<header class="site-head"><a class="brand" href="/" aria-label="Rename Plan Reviewer home"><span class="brand-mark" aria-hidden="true">↝</span><span>Rename Plan Reviewer</span></a><nav class="site-nav" aria-label="Primary"><a href="/demo/">Demo</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav><div class="head-actions"><span id="connection" class="connection">On-device</span><button id="install-app" class="text-button" hidden>Install app</button></div></header>`;
+}
+
+function shell(demo: boolean): string {
   const purchaseAction = purchasesEnabled
     ? `<a id="buy-plus" class="primary-link" href="${escapeHtml(buyUrl)}">Buy Plus — $12 once</a>`
     : `<p id="buy-plus" class="purchase-paused">New Plus purchases are temporarily unavailable. Existing licenses can still be restored below.</p>`;
-  return `<header class="site-head"><a class="brand" href="/" aria-label="Rename Plan Reviewer home"><span class="brand-mark" aria-hidden="true">↝</span><span>Rename Plan Reviewer</span></a><div class="head-actions"><span id="connection" class="connection">On-device</span><button id="install-app" class="text-button" hidden>Install app</button></div></header>
+  return `${header()}${demo ? `<aside class="demo-banner" aria-label="Demo controls"><strong>Demo — sample data, nothing is saved</strong><span>Use the risky sample to inspect the reviewer.</span><button id="reset-demo" class="text-button">Reset demo</button><a href="/">Start for real</a></aside>` : ''}
   <main id="main" tabindex="-1">
-    <section class="hero" aria-labelledby="page-title"><div class="hero-copy"><p class="eyebrow">BATCH RENAME / PRE-FLIGHT</p><h1 id="page-title">Catch the collision<br><em>before</em> the rename.</h1><p class="lede">Turn spreadsheet mappings or regex rules into a reviewed, reversible plan. Your paths never leave this browser.</p><div class="trust-line"><span>✓ No file access</span><span>✓ Works offline</span><span>✓ Dry run first</span></div></div><figure class="hero-art"><img src="/assets/rename-ledger.webp" width="960" height="640" alt="Paper file tabs connected by pencil arrows, with a collision mark and a green check" fetchpriority="high" decoding="async"><figcaption>A rename is a hypothesis until you run it.</figcaption></figure></section>
+    <section class="hero" aria-labelledby="page-title"><div class="hero-copy"><p class="eyebrow">BATCH RENAME / PRE-FLIGHT</p><h1 id="page-title">Review batch renames<br><em>before</em> you run them.</h1><p class="lede">For people preparing risky spreadsheet or regex batch renames.</p><div class="hero-action-row">${demo ? `<button id="reset-demo-hero" class="primary-link">Reset sample plan</button><span>The risky sample is ready to inspect.</span>` : `<a class="primary-link" href="/demo/">Try it with sample data</a><span>Loads a risky sample plan to inspect.</span>`}</div><div class="trust-line"><span>✓ Data stays in this browser</span><span>✓ Works offline after first visit</span><span>✓ Exports start as dry runs</span></div></div><figure class="hero-art"><img src="/assets/rename-ledger.webp" width="960" height="640" alt="Paper file tabs connected by pencil arrows, with a collision mark and a green check" fetchpriority="high" decoding="async"><figcaption>A rename is a hypothesis until you run it.</figcaption></figure></section>
     <section class="workbench" aria-label="Rename plan workbench">
       <div class="input-column"><div class="section-heading"><span class="step">01</span><div><h2>Add the proposed names</h2><p>Paste two columns, import a file, or derive names with a rule.</p></div></div>
         <div class="tabs" role="tablist" aria-label="Input method"><button role="tab" data-mode="csv" aria-controls="csv-panel">Mapping table</button><button role="tab" data-mode="rule" aria-controls="rule-panel">Regex rule</button></div>
@@ -266,14 +297,14 @@ function shell(): string {
       </div>
       <div class="review-column"><div class="section-heading"><span class="step">03</span><div><h2>Review the evidence</h2><p>Errors block scripts. Warnings need your judgment.</p></div></div><section id="report" aria-live="polite" aria-label="Review findings"></section></div>
     </section>
-    <section class="export-section"><div class="section-heading"><span class="step">04</span><div><h2>Take away a reversible plan</h2><p id="export-state">Add mappings to prepare exports.</p></div></div><div class="live-toggle"><label class="switch"><input id="live-commands" type="checkbox"><span><strong>Generate live commands</strong><small>Off by default. Leave off until the printed dry run is correct.</small></span></label><p id="live-warning" class="live-warning" hidden><strong>Live mode:</strong> exported scripts will rename files. Back up first.</p></div><div class="export-grid"><button data-export="shell" data-safe-export><span class="file-type">.SH</span><span><strong>Export shell plan</strong><small>macOS / Linux, safely quoted</small></span></button><button data-export="powershell" data-safe-export><span class="file-type">.PS1</span><span><strong>Export PowerShell</strong><small>Windows, literal paths</small></span></button><button data-export="manifest"><span class="file-type">↶</span><span><strong>Export undo manifest</strong><small>JSON destinations → originals</small></span></button><button data-export="csv"><span class="file-type">.CSV</span><span><strong>Export reviewed mapping</strong><small>Your portable source of truth</small></span></button></div></section>
+    <section class="export-section"><div class="section-heading"><span class="step">04</span><div><h2>Take away a reversible plan</h2><p id="export-state">Add mappings to prepare exports.</p></div></div><div class="live-toggle"><label class="switch"><input id="live-commands" type="checkbox"><span><strong>Generate live commands</strong><small>Off by default. Leave off until the printed dry run is correct.</small></span></label><p id="live-warning" class="live-warning" hidden><strong>Live mode:</strong> exported scripts will rename files. Back up first.</p></div><div class="export-grid"><button data-export="shell" data-safe-export><span class="file-type">.SH</span><span><strong>Export shell plan</strong><small>macOS / Linux</small></span></button><button data-export="powershell" data-safe-export><span class="file-type">.PS1</span><span><strong>Export PowerShell</strong><small>Windows plan</small></span></button><button data-export="manifest"><span class="file-type">↶</span><span><strong>Export undo manifest</strong><small>JSON destinations → originals</small></span></button><button data-export="csv"><span class="file-type">.CSV</span><span><strong>Export reviewed mapping</strong><small>Your portable source of truth</small></span></button></div></section>
     <section class="plus-section" aria-labelledby="plus-title"><div><p class="eyebrow">OPTIONAL BENCH UPGRADE</p><h2 id="plus-title">Keep the reviewer free. Pack the paperwork with Plus.</h2><p>One-time US $12. Plus adds a combined Markdown review packet with findings and both scripts. Every safety check, dry run, CSV and undo export stays free.</p><p class="legal-links">Sociobot/Dodo is merchant of record. <a href="/terms/">Terms</a> · <a href="/privacy/">Privacy</a></p></div><div class="license-box">${purchaseAction}<form id="restore-license"><label for="license-token">Have a license? Paste it</label><div class="restore-row"><input id="license-token" type="password" autocomplete="off"><button>Verify</button></div></form><button id="export-packet" disabled>Export Plus review packet</button><p id="plus-state" role="status">Free reviewer active. Plus is optional.</p></div></section>
   </main>${footer()}<div id="toast" class="toast" role="status" hidden></div>`;
 }
 
 function renderReport(container: Element, rows: RenameRow[], findings: Finding[], safe: boolean, errors: number, warnings: number, notes: number, filter: Severity | 'all', parseErrors: string[]): void {
   if (!rows.length && !parseErrors.length) {
-    container.innerHTML = `<div class="empty-report"><div class="empty-mark" aria-hidden="true">↝</div><h3>The page is clean.</h3><p>Add a mapping on the left. Checks run here as you type—nothing is uploaded or renamed.</p><ol><li>We compare destinations.</li><li>We circle portability risks.</li><li>We stage a reversible order.</li></ol></div>`;
+    container.innerHTML = `<div class="empty-report"><div class="empty-mark" aria-hidden="true">↝</div><h3>The page is clean.</h3><p>Add a mapping on the left. Checks run here as you type.</p><ol><li>We compare destinations.</li><li>We circle portability risks.</li><li>We stage a reversible order.</li></ol></div>`;
     return;
   }
   const allFindings: Finding[] = [...parseErrors.map((detail, index) => ({ severity: 'error' as const, code: `parse-${index}`, title: 'Input could not be read', detail, rows: [] })), ...findings];
@@ -283,7 +314,7 @@ function renderReport(container: Element, rows: RenameRow[], findings: Finding[]
   const preview = rows.slice(0, 100);
   container.innerHTML = `<div class="verdict ${statusClass}"><span class="verdict-mark" aria-hidden="true">${errors ? '!' : warnings ? '?' : '✓'}</span><div><strong>${statusTitle}</strong><small>${rows.length.toLocaleString()} mapping${rows.length === 1 ? '' : 's'} checked${rows.length > 100 ? '; first 100 shown below' : ''}</small></div></div>
     <div class="counters" aria-label="Filter findings"><button data-filter="all" aria-pressed="${filter === 'all'}"><strong>${allFindings.length}</strong><span>All</span></button><button data-filter="error" aria-pressed="${filter === 'error'}"><strong>${errors}</strong><span>Errors</span></button><button data-filter="warning" aria-pressed="${filter === 'warning'}"><strong>${warnings}</strong><span>Warnings</span></button><button data-filter="note" aria-pressed="${filter === 'note'}"><strong>${notes}</strong><span>Notes</span></button></div>
-    <div class="findings">${shown.length ? shown.map(findingHtml).join('') : `<p class="no-findings">No ${filter} findings. Press Escape to show all.</p>`}</div>
+    <div class="findings" tabindex="0" aria-label="${shown.length} review findings. Use arrow keys to scroll.">${shown.length ? shown.map(findingHtml).join('') : `<p class="no-findings">No ${filter} findings. Press Escape to show all.</p>`}</div>
     <details class="mapping-preview"><summary>Inspect mapping table <span>${rows.length.toLocaleString()} rows</span></summary><div class="table-wrap"><table><thead><tr><th scope="col">#</th><th scope="col">Current</th><th scope="col">New</th></tr></thead><tbody>${preview.map((row) => `<tr><td>${row.line}</td><td><code>${escapeHtml(row.current || '—')}</code></td><td><code>${escapeHtml(row.next || '—')}</code></td></tr>`).join('')}</tbody></table></div></details>`;
   if (!safe && errors === 0) { /* only occurs for empty rows, handled above */ }
 }
@@ -294,7 +325,12 @@ function findingHtml(finding: Finding): string {
 }
 
 function footer(): string {
-  return `<footer><p><span class="brand-mark" aria-hidden="true">↝</span> A Param Factory utility. Runs locally; never renames files itself.</p><nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-rename-plan-reviewer">Source</a></nav><p class="provenance">Notebook illustration generated for this product with the factory image model.</p></footer>`;
+  return `<footer><p><span class="brand-mark" aria-hidden="true">↝</span> A Param Factory utility.</p><nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-rename-plan-reviewer">Source</a></nav><p class="provenance">Notebook illustration generated for this product with the factory image model.</p></footer>`;
+}
+
+function renderNotFound(): void {
+  document.title = 'Page not found — Rename Plan Reviewer';
+  app.innerHTML = `${header()}<main id="main" tabindex="-1" class="legal-page"><p class="eyebrow">MISFILED NOTE</p><h1>That page is not on this desk.</h1><p>Return to the reviewer to check a rename plan.</p><p><a href="/">← Open Rename Plan Reviewer</a></p></main>${footer()}`;
 }
 
 function escapeHtml(value: string): string {
@@ -340,4 +376,5 @@ function showUpdate(registration: ServiceWorkerRegistration): void {
 
 if (location.pathname.startsWith('/privacy')) renderLegal('privacy');
 else if (location.pathname.startsWith('/terms')) renderLegal('terms');
-else void startApp();
+else if (location.pathname === '/' || isDemoRoute()) void startApp();
+else renderNotFound();

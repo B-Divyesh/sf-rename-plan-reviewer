@@ -6,6 +6,7 @@ describe('production response policy', () => {
     globalHeaders: Record<string, string>;
     mimeTypes: Record<string, string>;
     routes: Array<{ route: string; headers: Record<string, string> }>;
+    responseOverrides?: Record<string, { rewrite: string; statusCode: number }>;
   };
 
   it('serves the manifest with its standard MIME type and restrictive browser policies', () => {
@@ -18,5 +19,11 @@ describe('production response policy', () => {
     expect(config.routes.find((route) => route.route === '/assets/*')?.headers['Cache-Control']).toContain('immutable');
     expect(config.routes.find((route) => route.route === '/assets/rename-ledger.webp')?.headers['Cache-Control']).not.toContain('immutable');
     expect(config.routes.find((route) => route.route === '/sw.js')?.headers['Cache-Control']).toBe('no-cache');
+  });
+
+  it('ships crawl assets and routes an unknown path to the designed 404 document', () => {
+    expect(config.responseOverrides?.['404']).toMatchObject({ rewrite: '/404/index.html', statusCode: 404 });
+    expect(readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8')).toContain('Sitemap:');
+    expect(readFileSync(new URL('../public/sitemap.xml', import.meta.url), 'utf8')).toContain('/demo/');
   });
 });

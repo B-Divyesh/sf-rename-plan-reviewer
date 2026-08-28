@@ -1,0 +1,37 @@
+[
+  {
+    "id": "risky-sample-review",
+    "claim": "Try the reviewer with a risky sample plan.",
+    "where": "landing primary action, demo",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:risky-sample-review",
+    "sandbox": "fresh browser context; open /demo/ and assert the populated sample reports its reserved-name error"
+  },
+  {
+    "id": "demo-isolated",
+    "claim": "Demo — sample data, nothing is saved.",
+    "where": "demo banner",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:demo-isolated",
+    "sandbox": "save a real draft, edit /demo/, then prove the real draft returns unchanged"
+  },
+  {
+    "id": "local-only",
+    "claim": "Data stays in this browser.",
+    "where": "landing fact",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:local-only",
+    "sandbox": "capture every request while loading and editing the demo; assert all requests are same-origin"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "Works offline after first visit.",
+    "where": "landing fact, README",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:offline-reload",
+    "sandbox": "visit /demo/, wait for the service worker, take the browser offline, and reload"
+  },
+  {
+    "id": "dry-run-export",
+    "claim": "Exports start as dry runs.",
+    "where": "landing fact, export controls",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:dry-run-export",
+    "sandbox": "make the demo sample safe, download the shell plan, and assert its mode prints commands only"
+  }
+]

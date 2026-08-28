@@ -116,6 +116,20 @@ test('desktop and 390 mobile states meet semantics, axe, motion, focus, and no-o
   }
 });
 
+test('the populated 390px demo findings region is keyboard-scrollable and has no serious axe findings', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.goto('/demo/');
+  const findings = page.locator('.findings');
+  await expect(findings).toBeVisible();
+  await findings.focus();
+  await expect(findings).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  const axe = await new AxeBuilder({ page }).analyze();
+  expect(axe.violations.filter(v => ['serious', 'critical'].includes(v.impact ?? ''))).toEqual([]);
+  await context.close();
+});
+
 test('manifest has no Chromium installability errors', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();

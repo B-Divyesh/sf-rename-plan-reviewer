@@ -125,7 +125,7 @@ test('offers and applies an installed service-worker update', async ({ page }) =
   });
   await expect(page.getByText('A fresh notebook is ready.')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Update now' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Catch the collision');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Review batch renames');
 });
 
 test('loaded app remains usable offline', async ({ page, context }) => {
@@ -133,7 +133,7 @@ test('loaded app remains usable offline', async ({ page, context }) => {
   await page.reload();
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Catch the collision');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Review batch renames');
   await expect(page.getByText('Offline · on-device')).toBeVisible();
   await page.getByLabel('Current and new paths').fill('current,new\na.txt,b.txt');
   await expect(page.getByText('No blocking risks found')).toBeVisible();

@@ -33,6 +33,8 @@ a:hover { color: var(--red); }
 .skip-link { position: fixed; z-index: 100; left: 1rem; top: 1rem; background: var(--indigo); color: white; padding: .75rem 1rem; transform: translateY(-180%); }
 .skip-link:focus { transform: none; }
 .site-head { max-width: 1440px; margin: 0 auto; min-height: 72px; padding: max(1rem, env(safe-area-inset-top)) clamp(1rem, 4vw, 4rem) .75rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.site-nav { display: flex; align-items: center; gap: 1rem; margin-left: auto; font: 700 .78rem/1 ui-monospace, monospace; }
+.site-nav a { display: inline-grid; place-items: center; min-height: 44px; }
 .brand { display: inline-flex; align-items: center; gap: .65rem; color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; text-decoration: none; letter-spacing: -.03em; }
 .brand-mark { display: inline-grid; place-items: center; width: 2rem; height: 2rem; border: 2px solid var(--indigo); border-radius: 50%; color: var(--indigo); line-height: 1; transform: rotate(-7deg); }
 .head-actions { display: flex; align-items: center; gap: .75rem; }
@@ -47,6 +49,8 @@ main { max-width: 1440px; min-height: calc(100vh - 72px); margin: 0 auto; paddin
 h1 { max-width: 760px; margin: 0; font-size: clamp(3.1rem, 7.2vw, 7.4rem); line-height: .92; letter-spacing: -.055em; font-weight: 500; }
 h1 em { color: var(--red); font-weight: inherit; text-decoration: underline; text-decoration-thickness: .08em; text-decoration-color: var(--red); text-underline-offset: .08em; }
 .lede { max-width: 42rem; margin: 2rem 0 1.4rem; font-size: clamp(1.1rem, 1.6vw, 1.35rem); line-height: 1.5; }
+.hero-action-row { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem 1rem; margin: 0 0 1.4rem; color: var(--muted); font-size: .92rem; }
+.hero-action-row .primary-link { border: 1px solid var(--indigo); cursor: pointer; }
 .trust-line { display: flex; flex-wrap: wrap; gap: .65rem 1.5rem; color: var(--green); font: 700 .78rem/1.4 ui-monospace, monospace; text-transform: uppercase; }
 .hero-art { margin: 0; transform: rotate(1.2deg); }
 .hero-art img { display: block; width: 100%; height: auto; border: 10px solid var(--sheet); box-shadow: var(--shadow); clip-path: polygon(0 1%, 100% 0, 99% 98%, 1% 100%); }
@@ -114,6 +118,7 @@ textarea::placeholder, input::placeholder { color: #767064; opacity: 1; }
 .counters strong { font: 800 1.25rem/1 ui-monospace, monospace; }
 .counters span { margin-top: .3rem; font-size: .75rem; }
 .findings { display: grid; gap: .75rem; max-height: 380px; overflow: auto; padding: 3px 8px 3px 3px; }
+.findings:focus-visible { outline: 3px solid var(--sheet); box-shadow: 0 0 0 6px var(--indigo); }
 .finding { display: grid; grid-template-columns: 4.2rem 1fr; gap: .75rem; padding: 1rem; background: rgba(255,250,240,.74); border-left: 4px solid var(--indigo); animation: settle .18s ease-out; }
 .finding.error { border-left-color: var(--red); }
 .finding.warning { border-left-color: var(--ochre); }
@@ -154,6 +159,9 @@ code { font: .78rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow
 .restore-row button { min-width: 5rem; }
 #plus-state { min-height: 1.5rem; margin: 0; color: var(--muted); font-size: .85rem; }
 .purchase-paused { margin: 0; padding: .75rem; border-left: 3px solid var(--ochre); color: var(--ink); font-size: .9rem; }
+.demo-banner { max-width: 1440px; margin: 0 auto; padding: .7rem clamp(1rem, 4vw, 4rem); display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; color: var(--indigo); background: #e8dfc8; border-block: 1px solid var(--rule); font: 700 .8rem/1.35 ui-monospace, monospace; }
+.demo-banner strong { color: var(--ink); }
+.demo-banner button, .demo-banner a { min-height: 36px; padding: .4rem .6rem; }
 footer { max-width: 1440px; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 4rem) max(2rem, env(safe-area-inset-bottom)); display: flex; align-items: center; flex-wrap: wrap; gap: 1rem 2rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .82rem; }
 footer p { margin: 0; }
 footer .brand-mark { width: 1.5rem; height: 1.5rem; display: inline-grid; vertical-align: middle; }
@@ -178,6 +186,7 @@ footer a, .legal-links a, .legal-page a { display: inline-flex; align-items: cen
 @media (max-width: 640px) {
   .app-loading { min-height: 3900px; }
   .site-head { min-height: 64px; }
+  .site-nav { order: 3; width: 100%; justify-content: flex-start; margin-left: 0; }
   .brand span:nth-child(2) { font-size: .82rem; }
   .connection { font-size: .62rem; }
   .hero { display: flex; flex-direction: column; align-items: stretch; padding: 2.5rem 0 4rem; }
@@ -185,6 +194,7 @@ footer a, .legal-links a, .legal-page a { display: inline-flex; align-items: cen
   .hero-art { width: 78%; align-self: flex-end; margin-top: 1rem; }
   .hero-art figcaption { font-size: .8rem; }
   .trust-line { display: grid; gap: .4rem; }
+  .hero-action-row { align-items: flex-start; flex-direction: column; }
   .rule-grid, .assumption-grid { grid-template-columns: 1fr; }
   .assumption-grid { padding-left: 0; }
   .check { grid-column: auto; }

@@ -1,21 +1,18 @@
 # Rename Plan Reviewer
 
-Rename Plan Reviewer turns a spreadsheet mapping or regex rule into a checked, portable rename plan before any file is touched. It is for people preparing high-stakes photo, document, and archive renames who need to catch collisions, unsafe paths, numbering gaps, case/Unicode surprises, and rename cycles.
+Review batch renames before you run them.
 
-Live: <https://rename-plan-reviewer.sociobot.in>
+For people preparing risky spreadsheet or regex batch renames. Paste current and
+new paths, then inspect the findings before exporting a plan.
 
-## What it does
+Try the isolated sample at [the demo](/demo/). The demo contains a swap, a
+numbering gap, and a reserved Windows name.
 
-- Imports two-column CSV/TSV/semicolon mappings and Rename Plan Reviewer JSON, or derives destinations from a JavaScript regex.
-- Checks duplicate sources and destinations, reserved names, invalid portable characters, absolute/traversal paths, case-only changes, Unicode normalization collisions, numbering gaps, cycles, and moving-parent dependencies.
-- Generates a preflighted, two-phase shell or PowerShell plan. Exports are dry-run-only by default.
-- Exports a reviewed CSV and JSON undo manifest even when a plan still has findings.
-- Saves the current draft in IndexedDB and works offline after the first visit. Paths are never uploaded.
-- Offers optional Plus convenience features through a one-time Sociobot license. Safety checks and core exports are never gated.
+- Data stays in this browser.
+- Works offline after the first visit.
+- Exports start as dry runs.
 
-The app does not browse, inspect, or rename files. Generated live scripts validate the real folder state immediately before staging, but users should still keep a backup.
-
-## Develop and verify
+## Run and verify
 
 Requires Node.js 20 or newer.
 
@@ -26,27 +23,15 @@ npm test
 npm run build
 ```
 
-`npm test` runs unit coverage plus Chromium desktop/mobile, keyboard, axe accessibility, download, console, and offline service-worker tests. The exact production build command is `npm run build`; output lands in `dist/` with `dist/index.html` at its root.
+`npm run build` writes the static PWA to `dist/`. Deploy that directory with the
+included `staticwebapp.config.json` configuration.
 
-The production billing dependency has a separate response-policy check because it intentionally sends a 240-request acceptance burst:
+Each visitor-facing claim is mapped to an observable demo test in
+`.factory/claims.json`. Run a listed command after `npm ci` to verify one claim.
 
-```sh
-npm run verify:billing-rate-limit
-```
+## Privacy and terms
 
-For a local production preview:
-
-```sh
-npm run build
-npm run preview
-```
-
-## Billing configuration
-
-License verification uses the production Sociobot API by default. New purchase links are intentionally hidden while the factory product is unregistered, so users never reach a broken checkout. After the factory enables the product, build with `VITE_PURCHASES_ENABLED=true`; staging may additionally set `VITE_BILLING_BASE=https://pilot-api.sociobot.in/api/v1`. No payment provider or product ID is embedded in this repository.
-
-## Privacy, design, and deployment
-
-There are no analytics, runtime CDNs, or third-party fonts. The [privacy policy](https://rename-plan-reviewer.sociobot.in/privacy/) explains local draft and license storage. The product-specific visual system and generated-asset provenance live in [`.factory/design.md`](.factory/design.md). This is a static PWA; deploy the contents of `dist/` and configure clean-path fallback if the host needs it.
+Drafts use IndexedDB on this device. The demo uses a separate `demo:` database.
+See the [privacy policy](/privacy/) and [terms](/terms/).
 
 MIT licensed. See [LICENSE](LICENSE).
