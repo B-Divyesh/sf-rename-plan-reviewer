@@ -74,6 +74,9 @@ npm run build
 - The production host now serves the repaired asset
   `main-CiJ8jX0n.js`; an unknown route returns HTTP 404 with the designed
   404 document.
+- Rebuilt/local and live SHA-256 values match: `index.html`
+  `5965fdaab7a2499b969881d32232643012768209e67b432b9408ceff21381851`;
+  `sw.js` `2beae3cb2df8f2fb3b79ffeb5da01092d5ab98a81c786cfcd792acc5c0e646b6`.
 - `RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e`:
   78/78 pass. Output: `.factory/evidence/polish-1/live-e2e.txt`.
 - `/opt/fleet/lib/verify-url.sh` cold checks passed for `/`, `/demo/`,
