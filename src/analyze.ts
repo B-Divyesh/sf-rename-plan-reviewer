@@ -94,6 +94,13 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
     else if (row.current.toLocaleLowerCase('en-US') === row.next.toLocaleLowerCase('en-US')) add(findings, 'warning', 'case-only', 'Case-only rename needs a temporary name', 'Case-insensitive filesystems cannot rename this directly. The generated two-phase plan handles it.', [row.line]);
   });
 
+  const normalizedSources = rows.filter((row) => row.current).map((row) => ({ row, path: row.current.replaceAll('\\', '/').replace(/\/$/, '') }));
+  rows.forEach((row) => {
+    const target = row.next.replaceAll('\\', '/');
+    const parentSource = normalizedSources.find((source) => source.row.id !== row.id && target.startsWith(`${source.path}/`));
+    if (parentSource) add(findings, 'error', 'moving-parent', 'Destination sits inside another moving path', `Row ${parentSource.row.line} moves “${parentSource.row.current}”, so this destination folder may disappear during staging. Split these changes into separate plans.`, [parentSource.row.line, row.line]);
+  });
+
   const normalizationGroups = new Map<string, RenameRow[]>();
   rows.filter((row) => row.next).forEach((row) => {
     const key = row.next.normalize('NFC').toLocaleLowerCase('en-US');

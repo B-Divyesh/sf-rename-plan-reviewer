@@ -55,6 +55,11 @@ describe('safety review', () => {
     expect(codes).toEqual(expect.arrayContaining(['path-traversal', 'absolute-path', 'invalid-character', 'unicode-collision']));
   });
 
+  it('blocks a destination nested under another moving source', () => {
+    const review = analyze([row('folder', 'archive', 1), row('photo.jpg', 'folder/photo.jpg', 2)], assumptions);
+    expect(review.findings.map((finding) => finding.code)).toContain('moving-parent');
+  });
+
   it('reviews 1,000 safe mappings and stages unique names', () => {
     const rows = Array.from({ length: 1_000 }, (_, index) => row(`in/file-${index}.jpg`, `out/photo-${String(index).padStart(4, '0')}.jpg`, index + 1));
     const review = analyze(rows, assumptions);
@@ -73,6 +78,7 @@ describe('reversible exports', () => {
     expect(script).toContain("'a'\"'\"'s file.txt'");
     expect(script.indexOf('# Phase 2')).toBeGreaterThan(script.lastIndexOf('.rpr-', script.indexOf('# Phase 2')));
     expect(script).toContain('set -eu');
+    expect(shellPlan([row('a.txt', 'folder/b.txt', 1)], assumptions, true)).toContain('Destination folder is missing');
   });
 
   it('uses literal PowerShell paths and defaults can print only', () => {

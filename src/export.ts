@@ -32,6 +32,10 @@ function untouchedTargets(staged: StagedRename[], caseInsensitive: boolean): str
   return staged.map((row) => row.next).filter((target) => !sources.has(key(target)));
 }
 
+function targetDirectories(staged: StagedRename[]): string[] {
+  return [...new Set(staged.map((row) => row.next.replaceAll('\\', '/')).map((target) => target.slice(0, target.lastIndexOf('/'))).filter(Boolean))];
+}
+
 export function shellPlan(rows: RenameRow[], assumptions: Assumptions, live: boolean): string {
   const staged = stageRows(rows);
   const move = (from: string, to: string) => live ? `mv -- ${sh(from)} ${sh(to)}` : `printf '%s\\n' ${sh(`mv -- ${sh(from)} ${sh(to)}`)}`;
@@ -43,8 +47,9 @@ export function shellPlan(rows: RenameRow[], assumptions: Assumptions, live: boo
     '',
     '# Preflight: stop before touching anything if assumptions do not match.',
     ...staged.map((row) => `[ -e ${sh(row.current)} ] || { printf '%s\\n' ${sh(`Missing source: ${row.current}`)} >&2; exit 1; }`),
-    ...staged.map((row) => `[ ! -e ${sh(row.temporary)} ] || { printf '%s\\n' ${sh(`Temporary path already exists: ${row.temporary}`)} >&2; exit 1; }`),
-    ...untouchedTargets(staged, assumptions.caseInsensitive).map((target) => `[ ! -e ${sh(target)} ] || { printf '%s\\n' ${sh(`Destination already exists: ${target}`)} >&2; exit 1; }`),
+    ...staged.map((row) => `[ ! -e ${sh(row.temporary)} ] && [ ! -L ${sh(row.temporary)} ] || { printf '%s\\n' ${sh(`Temporary path already exists: ${row.temporary}`)} >&2; exit 1; }`),
+    ...untouchedTargets(staged, assumptions.caseInsensitive).map((target) => `[ ! -e ${sh(target)} ] && [ ! -L ${sh(target)} ] || { printf '%s\\n' ${sh(`Destination already exists: ${target}`)} >&2; exit 1; }`),
+    ...targetDirectories(staged).map((directory) => `[ -d ${sh(directory)} ] || { printf '%s\\n' ${sh(`Destination folder is missing: ${directory}`)} >&2; exit 1; }`),
     '',
     '# Phase 1: move every source aside so swaps and cycles cannot overwrite.',
     ...staged.map((row) => move(row.current, row.temporary)),
@@ -69,6 +74,7 @@ export function powershellPlan(rows: RenameRow[], assumptions: Assumptions, live
     ...staged.map((row) => `if (-not (Test-Path -LiteralPath ${ps(row.current)})) { throw ${ps(`Missing source: ${row.current}`)} }`),
     ...staged.map((row) => `if (Test-Path -LiteralPath ${ps(row.temporary)}) { throw ${ps(`Temporary path already exists: ${row.temporary}`)} }`),
     ...untouchedTargets(staged, assumptions.caseInsensitive).map((target) => `if (Test-Path -LiteralPath ${ps(target)}) { throw ${ps(`Destination already exists: ${target}`)} }`),
+    ...targetDirectories(staged).map((directory) => `if (-not (Test-Path -LiteralPath ${ps(directory)} -PathType Container)) { throw ${ps(`Destination folder is missing: ${directory}`)} }`),
     '',
     '# Phase 1: move every source aside so swaps and cycles cannot overwrite.',
     ...staged.map((row) => move(row.current, row.temporary)),
