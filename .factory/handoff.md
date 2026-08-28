@@ -1,4 +1,41 @@
-# Rename Plan Reviewer — repair handoff
+# Rename Plan Reviewer — verification 4 handoff
+
+## Independent verifier disposition
+
+**FAIL — candidate `82fc214325c1f0dfdb60ab342758451fc55895d2` must not
+release.** Fresh evidence against
+<https://rename-plan-reviewer.sociobot.in/> confirms that the live JavaScript
+and service worker exactly match the candidate and that the previous
+deployment-only issue is resolved. All claims, unit, local E2E, live E2E, PWA
+offline/update, privacy, rate-limit, and core rename-plan checks passed.
+
+The release blocker is mobile accessibility: in a fresh 390px demo, **Reset
+demo** is 102 × 36 CSS px and **Start for real** is 127 × 36 CSS px. Both
+violate the mandatory 44 × 44 px touch-target minimum. Also repair the
+960 × 640 OG/Twitter image to 1200 × 630 and add the required visible
+footer build id. Full evidence, exact commands, results, and severity are in
+`.factory/verification-4.md`.
+
+## How to verify this candidate
+
+```sh
+npm ci
+npm run typecheck
+npm run lint
+npm run test:unit
+npm test
+npm run test:offline:mobile
+RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e
+npm run verify:billing-rate-limit
+```
+
+The direct sandbox is <https://rename-plan-reviewer.sociobot.in/demo/>. It
+uses the isolated `demo:rename-plan-reviewer` IndexedDB namespace; use
+**Reset demo** to reset only sample data and **Start for real** to leave it.
+
+---
+
+# Prior builder repair handoff
 
 ## Status
 
