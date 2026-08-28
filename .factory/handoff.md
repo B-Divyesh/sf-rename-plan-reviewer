@@ -44,9 +44,18 @@ npm run test:offline:mobile
   root, demo, privacy, and terms have no console errors, one h1, one main,
   `lang=en`, useful titles, and complete image alt text.
 
-After this commit, a clean clone must run every exact command in
-`.factory/claims.json`, then the deployed site must be cold-checked at
-`https://rename-plan-reviewer.sociobot.in/` before release confirmation.
+Clean-clone verification was run at commit
+`49281283be42f9082a58a0af52c6437097734e3c` in
+`/tmp/rpr-clean-nti5vE` after `npm ci` (51 packages, zero vulnerabilities):
+
+- Every one of the 18 exact commands from `.factory/claims.json` passed in
+  both browser projects. The complete command output is
+  `.factory/evidence/polish-1/clean-claims.txt`.
+- `typecheck`, `lint`, and 19/19 unit tests passed; `npm test` passed 78/78
+  browser tests; `npm run test:offline:mobile` passed 20/20 repeated reloads.
+  The complete output is `.factory/evidence/polish-1/clean-full-suite.txt`.
+- `npm run verify:billing-rate-limit` observed 30 HTTP 200 responses followed
+  by 210 HTTP 429 responses, all 210 with `Retry-After`.
 
 ## Run locally
 
@@ -59,5 +68,5 @@ npm run build
 
 ## Known gaps
 
-None. Deployment and the final cold live re-check are recorded after the
-work-order static deploy completes.
+None. The final static deployment ID and cold live re-check are recorded in
+this handoff after the work-order deploy completes.
