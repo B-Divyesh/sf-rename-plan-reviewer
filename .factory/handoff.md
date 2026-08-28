@@ -51,8 +51,19 @@ initial JS is 36.28 KB raw / 13.33 KB gzip; CSS is 15.34 KB raw / 4.19 KB gzip.
 
 ## Deploy
 
-Static deployment uses `dist/` and `public/staticwebapp.config.json`. Live
-deployment identity is checked after push/deployment.
+Static deployment uses `dist/` and `public/staticwebapp.config.json`. Deployed
+on 2026-08-28 to `https://rename-plan-reviewer.sociobot.in/`; live `/demo/`
+returned the Demo title, `/robots.txt` returned 200, and an unknown path
+returned 404. Local and live SHA-256 values matched exactly:
+
+| File | SHA-256 |
+| --- | --- |
+| `index.html` | `6d87d26da1767a0fb76e5f06eac4080f10f41599286e00d7d394122b49111fc1` |
+| `sw.js` | `6e8dceb0e22d07bc9b466082804cd8e46306b78caf8b6a2d84a6d50a6cb446dc` |
+| `manifest.webmanifest` | `cce39d77046a39d0a4d541d6c83291616fd21f8beee2633d2dd4d92618306abe` |
+
+The live desktop claim suite plus populated 390px accessibility regression
+passed: 6/6 tests.
 
 ## Known gaps
 
