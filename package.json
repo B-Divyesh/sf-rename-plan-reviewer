@@ -13,6 +13,7 @@
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:offline:mobile": "npm run build && playwright test tests/e2e/offline.spec.ts --project=mobile-390-chromium --workers=1 --repeat-each=10",
     "verify:billing-rate-limit": "node scripts/verify-billing-rate-limit.mjs"
   },
   "devDependencies": {

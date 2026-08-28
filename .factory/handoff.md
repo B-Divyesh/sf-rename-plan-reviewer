@@ -69,3 +69,58 @@ passed: 6/6 tests.
 
 None for the verifier findings. Lighthouse was not installed in this worker;
 the bundle budgets and browser accessibility checks above were run locally.
+
+## Repair 4 — deterministic 390px offline path
+
+Repaired candidate `af89424763d71a71b17c1f1ec751160dd0d38fb4` on 2026-08-28.
+
+### Root cause and repair
+
+The previous test only waited for `navigator.serviceWorker.ready`. That proves
+an active registration, not that the current document is controlled. It also
+allowed reuse of an already-running Vite preview and concurrent Chromium
+workers, so a constrained runner could use stale output or close the mobile
+browser before the offline navigation finished.
+
+- `tests/e2e/offline.ts` now waits for worker activation, reloads online,
+  proves an activated controller and `rpr-*` cache, then takes the context
+  offline.
+- `tests/e2e/offline.spec.ts` adds a focused 390 × 844 workflow and the single
+  `@claim:offline-reload` test. It asserts that a post-offline-reload plan can
+  still be typed and reviewed.
+- `npm run test:offline:mobile` builds fresh output and repeats both focused
+  tests ten times. Playwright starts a non-reused Vite preview and uses one
+  Chromium worker to avoid the prior process contention.
+- The generated service worker now explicitly bypasses cross-origin requests,
+  matches same-origin cached resources without query-string variance, and uses
+  an app-shell fallback for an offline navigation. Its versioned precache,
+  network-first navigation, update toast and `clients.claim()` remain intact.
+
+### Exact verification evidence
+
+```sh
+npm ci && npm run build
+# 51 packages added; 0 vulnerabilities; dist/ generated
+# service worker rpr-c87d181b26: 16 files precached
+
+npm run test:offline:mobile
+# 20 passed: two focused 390px offline cases × 10 repeats
+
+npm test
+# 17 Vitest tests passed; 42 desktop/390px Playwright tests passed
+
+npm run verify:billing-rate-limit
+# {"requests":240,"statusCounts":{"200":30,"429":210},"retryAfterOn429":210}
+```
+
+The complete browser run covers keyboard, focus, reduced motion, populated
+390px Axe checks, privacy request capture, executable shell output,
+service-worker update, controller-backed offline reload, manifest, claims, and
+legal pages. The built initial JavaScript is 36.28 KB raw / 13.33 KB gzip; CSS
+is 15.34 KB raw / 4.19 KB gzip.
+
+### Deploy
+
+Static deployment uses `/opt/fleet/lib/deploy-static.sh rename-plan-reviewer dist`.
+Post-deployment live identity and browser verification are recorded below once
+the static deployment finishes.

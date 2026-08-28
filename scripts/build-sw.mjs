@@ -17,6 +17,7 @@ const fingerprintInput = await Promise.all(files.map(async (file) => `${file}:${
 const fingerprint = createHash('sha256').update(fingerprintInput.join('\n')).digest('hex').slice(0, 10);
 const source = `const VERSION='rpr-${fingerprint}';
 const SHELL=${JSON.stringify(files)};
+const APP_SHELL='/index.html';
 self.addEventListener('install',event=>{event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(SHELL)));});
 self.addEventListener('activate',event=>{event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==VERSION).map(key=>caches.delete(key)))),self.clients.claim()]));});
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
@@ -24,12 +25,12 @@ self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.method!=='GET')return;
   const url=new URL(request.url);
-  if(url.origin!==self.location.origin&&url.hostname.endsWith('sociobot.in')){event.respondWith(fetch(request));return;}
+  if(url.origin!==self.location.origin)return;
   if(request.mode==='navigate'){
-    event.respondWith(fetch(request).then(response=>{const copy=response.clone();caches.open(VERSION).then(cache=>cache.put(request,copy));return response;}).catch(async()=>await caches.match(request)||await caches.match('/index.html')||await caches.match('/offline.html')));
+    event.respondWith(fetch(request).then(response=>{const copy=response.clone();void caches.open(VERSION).then(cache=>cache.put(request,copy));return response;}).catch(async()=>await caches.match(request,{ignoreSearch:true})||await caches.match(APP_SHELL)||await caches.match('/offline.html')));
     return;
   }
-  if(url.origin===self.location.origin){event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(VERSION).then(cache=>cache.put(request,copy));}return response;})));}
+  event.respondWith(caches.match(request,{ignoreSearch:true}).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();void caches.open(VERSION).then(cache=>cache.put(request,copy));}return response;})));
 });
 `;
 await writeFile(new URL('sw.js', root), source);

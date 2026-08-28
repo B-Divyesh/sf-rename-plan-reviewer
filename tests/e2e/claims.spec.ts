@@ -41,16 +41,6 @@ test('@claim:local-only sends no request away from this site while reviewing dem
   expect(external).toEqual([]);
 });
 
-test('@claim:offline-reload reloads the demo after its first visit without a connection', async ({ page, context }) => {
-  await page.goto('/demo/');
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.reload();
-  await context.setOffline(true);
-  await page.reload();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Review batch renames');
-  await expect(page.getByText('Offline · on-device')).toBeVisible();
-});
-
 test('@claim:dry-run-export downloads a plan that prints commands instead of renaming files', async ({ page }) => {
   await page.goto('/demo/');
   await page.getByLabel('Current and new paths').fill('current,new\na.txt,b.txt\nb.txt,a.txt');

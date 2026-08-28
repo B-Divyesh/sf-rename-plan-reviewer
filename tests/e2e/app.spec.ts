@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { prepareOfflineReload, reloadOffline } from './offline';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -129,10 +130,8 @@ test('offers and applies an installed service-worker update', async ({ page }) =
 });
 
 test('loaded app remains usable offline', async ({ page, context }) => {
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.reload();
-  await context.setOffline(true);
-  await page.reload();
+  await prepareOfflineReload(page, '/');
+  await reloadOffline(context, page);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Review batch renames');
   await expect(page.getByText('Offline · on-device')).toBeVisible();
   await page.getByLabel('Current and new paths').fill('current,new\na.txt,b.txt');
