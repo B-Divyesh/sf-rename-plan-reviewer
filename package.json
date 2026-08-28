@@ -12,7 +12,8 @@
     "test": "vitest run && npm run build && playwright test",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "verify:billing-rate-limit": "node scripts/verify-billing-rate-limit.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

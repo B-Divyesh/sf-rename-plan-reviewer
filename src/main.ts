@@ -2,7 +2,7 @@ import './style.css';
 import { analyze } from './analyze';
 import { parseDelimited, rowsFromRule, toCsv } from './csv';
 import { buyUrl, cachedUnlock, captureLicense, purchasesEnabled, restoreLicense, verifyLicense } from './billing';
-import { planBundle, powershellPlan, shellPlan, undoManifest } from './export';
+import { powershellPlan, reviewPacket, shellPlan, undoManifest } from './export';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import type { Assumptions, Draft, Finding, RenameRow, Severity } from './types';
 
@@ -54,6 +54,9 @@ async function startApp(): Promise<void> {
   const caseInput = $<HTMLInputElement>('#case-insensitive');
   const report = $('#report');
   const storageStatus = $('#storage-status');
+  const plusState = $('#plus-state');
+  const packetButton = $<HTMLButtonElement>('#export-packet');
+  let reviewIsSafe = false;
 
   csvInput.value = draft.input;
   sourceInput.value = draft.sourceList;
@@ -101,14 +104,23 @@ async function startApp(): Promise<void> {
     }, 350);
   }
 
-  function review(): void {
+  function readPlan() {
     const result = csvPanel.hidden ? rowsFromRule(sourceInput.value, patternInput.value, replacementInput.value, flagsInput.value) : parseDelimited(csvInput.value, delimiterInput.value);
+    return { result, reviewed: analyze(result.rows, assumptions()) };
+  }
+
+  function review(): void {
+    const { result, reviewed } = readPlan();
     rows = result.rows;
     parseErrors = result.errors;
-    const reviewed = analyze(rows, assumptions());
     renderReport(report, reviewed.rows, reviewed.findings, reviewed.safe, reviewed.errors + parseErrors.length, reviewed.warnings, reviewed.notes, activeFilter, parseErrors);
     const unsafe = !reviewed.safe || parseErrors.length > 0;
+    reviewIsSafe = !unsafe;
     app.querySelectorAll<HTMLButtonElement>('[data-safe-export]').forEach((button) => button.disabled = unsafe);
+    packetButton.disabled = !unlocked || unsafe;
+    if (unlocked) plusState.textContent = unsafe
+      ? 'Resolve error findings before exporting a review packet with scripts.'
+      : 'Plus is active on this device.';
     $('#export-state').textContent = unsafe ? 'Resolve error findings before generating a script.' : `${rows.length} mappings are ready for a two-phase export.`;
     $('#live-warning').toggleAttribute('hidden', !liveInput.checked);
   }
@@ -178,21 +190,21 @@ async function startApp(): Promise<void> {
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && activeFilter !== 'all') { activeFilter = 'all'; review(); } });
 
   app.querySelectorAll<HTMLButtonElement>('[data-export]').forEach((button) => button.addEventListener('click', () => {
-    const reviewed = analyze(rows, assumptions());
+    const { result, reviewed } = readPlan();
     const type = button.dataset.export;
-    if (type !== 'manifest' && type !== 'csv' && (!reviewed.safe || parseErrors.length)) return;
-    if (type === 'shell') download('rename-plan.sh', shellPlan(rows, assumptions(), liveInput.checked), 'text/x-shellscript');
-    if (type === 'powershell') download('rename-plan.ps1', powershellPlan(rows, assumptions(), liveInput.checked), 'text/plain');
+    if (type !== 'manifest' && type !== 'csv' && (!reviewed.safe || result.errors.length)) return;
+    if (type === 'shell') download('rename-plan.sh', shellPlan(result.rows, assumptions(), liveInput.checked), 'text/x-shellscript');
+    if (type === 'powershell') download('rename-plan.ps1', powershellPlan(result.rows, assumptions(), liveInput.checked), 'text/plain');
     if (type === 'manifest') download('rename-undo.json', undoManifest(reviewed, assumptions()), 'application/json');
-    if (type === 'csv') download('reviewed-mapping.csv', toCsv(rows), 'text/csv');
+    if (type === 'csv') download('reviewed-mapping.csv', toCsv(result.rows), 'text/csv');
   }));
 
-  const plusState = $('#plus-state');
-  const packetButton = $<HTMLButtonElement>('#export-packet');
   function paintLicense(message?: string): void {
     unlocked = cachedUnlock() || unlocked;
-    packetButton.disabled = !unlocked;
-    plusState.textContent = message ?? (unlocked ? 'Plus is active on this device.' : 'Free reviewer active. Plus is optional.');
+    packetButton.disabled = !unlocked || !reviewIsSafe;
+    plusState.textContent = message ?? (unlocked
+      ? (reviewIsSafe ? 'Plus is active on this device.' : 'Resolve error findings before exporting a review packet with scripts.')
+      : 'Free reviewer active. Plus is optional.');
     $('#buy-plus').toggleAttribute('hidden', unlocked);
   }
   paintLicense();
@@ -213,9 +225,9 @@ async function startApp(): Promise<void> {
   });
   packetButton.addEventListener('click', () => {
     if (!unlocked) return;
-    const reviewed = analyze(rows, assumptions());
-    const packet = `# Rename review packet\n\nGenerated ${new Date().toISOString()}\n\n## Findings\n\n\`\`\`json\n${planBundle(reviewed, assumptions())}\n\`\`\`\n\n## Shell plan\n\n\`\`\`sh\n${shellPlan(rows, assumptions(), liveInput.checked)}\n\`\`\`\n\n## PowerShell plan\n\n\`\`\`powershell\n${powershellPlan(rows, assumptions(), liveInput.checked)}\n\`\`\`\n`;
-    download('rename-review-packet.md', packet, 'text/markdown');
+    const { result, reviewed } = readPlan();
+    if (!reviewed.safe || result.errors.length) return;
+    download('rename-review-packet.md', reviewPacket(reviewed, assumptions(), liveInput.checked, result.errors), 'text/markdown');
   });
 
   window.addEventListener('offline', () => setConnection(false));

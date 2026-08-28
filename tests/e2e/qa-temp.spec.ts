@@ -5,10 +5,8 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const base = 'https://rename-plan-reviewer.sociobot.in';
-
 test('live UI export executes a quoted swap and is reversible', async ({ page }) => {
-  await page.goto(base);
+  await page.goto('/');
   await page.getByLabel('Current and new paths').fill("current,new\na's file.txt,b.txt\nb.txt,a's file.txt");
   await expect(page.getByText('No blocking risks found')).toBeVisible();
   await page.getByLabel('Generate live commands').check();
@@ -33,7 +31,7 @@ test('live UI export executes a quoted swap and is reversible', async ({ page })
 });
 
 test('observe directory-only destination changes rename semantics', async ({ page }) => {
-  await page.goto(base);
+  await page.goto('/');
   await page.getByLabel('Current and new paths').fill('current,new\na.txt,folder/');
   await expect(page.getByText('No blocking risks found')).toBeVisible();
   await page.getByLabel('Generate live commands').check();
@@ -56,45 +54,37 @@ test('observe directory-only destination changes rename semantics', async ({ pag
 test('structurally invalid JSON import recovers without an uncaught page error', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(base);
+  await page.goto('/');
   await page.getByLabel('Import CSV or JSON').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"rows":[{}]}') });
   await page.waitForTimeout(500);
   expect(errors).toEqual([]);
   await expect(page.getByText('That JSON is not a Rename Plan Reviewer plan export.')).toBeVisible();
 });
 
-test('observe paid packet exports executable scripts despite error findings', async ({ page }) => {
-  await page.goto(base);
-  await page.evaluate(() => {
+test('Plus packet follows the script safety gate and exports only a safe plan', async ({ page }) => {
+  await page.addInitScript(() => {
     localStorage.setItem('sb_license:rename-plan-reviewer', 'qa-cached');
     localStorage.setItem('sb_license:rename-plan-reviewer:verdict', JSON.stringify({ valid: true, checkedAt: Date.now() }));
   });
-  await page.reload();
-  await expect(page.getByRole('button', { name: 'Export Plus review packet' })).toBeEnabled();
+  await page.goto('/');
+  const packet = page.getByRole('button', { name: 'Export Plus review packet' });
+  await expect(packet).toBeDisabled();
   await page.getByLabel('Current and new paths').fill('current,new\n../outside.txt,safe.txt');
   await expect(page.getByText('Source path leaves the working folder')).toBeVisible();
   await page.getByLabel('Generate live commands').check();
-  const packet = page.getByRole('button', { name: 'Export Plus review packet' });
+  await expect(page.getByRole('button', { name: /Export shell plan/ })).toBeDisabled();
+  await expect(packet).toBeDisabled();
+  await expect(page.getByText('Resolve error findings before exporting a review packet with scripts.')).toBeVisible();
+
+  await page.getByLabel('Current and new paths').fill('current,new\na.txt,b.txt');
+  await expect(page.getByText('No blocking risks found')).toBeVisible();
   await expect(packet).toBeEnabled();
   const downloadPromise = page.waitForEvent('download');
   await packet.click();
   const content = readFileSync((await (await downloadPromise).path())!, 'utf8');
-  expect(content).toContain("[ -e '../outside.txt' ]");
-  const script = content.match(/```sh\n([\s\S]*?)\n```/)?.[1];
-  expect(script).toBeTruthy();
-  const directory = mkdtempSync(join(tmpdir(), 'rpr-paid-root-'));
-  try {
-    const root = join(directory, 'root');
-    mkdirSync(root);
-    writeFileSync(join(directory, 'outside.txt'), 'outside');
-    const scriptPath = join(root, 'plan.sh');
-    writeFileSync(scriptPath, script!);
-    execFileSync('/bin/sh', [scriptPath], { cwd: root, encoding: 'utf8' });
-    expect(readFileSync(join(root, 'safe.txt'), 'utf8')).toBe('outside');
-    expect(() => readFileSync(join(directory, 'outside.txt'))).toThrow();
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
-  }
+  expect(content).not.toContain('../outside.txt');
+  expect(content).toContain("mv -- 'a.txt' '.rpr-");
+  expect(content).toContain("' 'b.txt'");
 });
 
 test('desktop and 390 mobile states meet semantics, axe, motion, focus, and no-overflow checks', async ({ browser }) => {
@@ -105,7 +95,7 @@ test('desktop and 390 mobile states meet semantics, axe, motion, focus, and no-o
     const pageErrors: string[] = [];
     page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
     page.on('pageerror', error => pageErrors.push(error.message));
-    await page.goto(base);
+    await page.goto('/');
     await page.getByLabel('Current and new paths').fill('current,new\na.txt,b.txt\nb.txt,a.txt');
     expect(await page.locator('h1').count()).toBe(1);
     expect(await page.locator('main').count()).toBe(1);
@@ -129,7 +119,7 @@ test('desktop and 390 mobile states meet semantics, axe, motion, focus, and no-o
 test('manifest has no Chromium installability errors', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto(base);
+  await page.goto('/');
   const session = await context.newCDPSession(page);
   const manifest = await session.send('Page.getAppManifest');
   expect(manifest.errors).toEqual([]);

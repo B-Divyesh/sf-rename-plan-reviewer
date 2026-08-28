@@ -28,6 +28,12 @@ npm run build
 
 `npm test` runs unit coverage plus Chromium desktop/mobile, keyboard, axe accessibility, download, console, and offline service-worker tests. The exact production build command is `npm run build`; output lands in `dist/` with `dist/index.html` at its root.
 
+The production billing dependency has a separate response-policy check because it intentionally sends a 240-request acceptance burst:
+
+```sh
+npm run verify:billing-rate-limit
+```
+
 For a local production preview:
 
 ```sh

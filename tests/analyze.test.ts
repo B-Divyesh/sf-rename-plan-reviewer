@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { analyze } from '../src/analyze';
 import { parseDelimited, rowsFromRule } from '../src/csv';
-import { powershellPlan, shellPlan, stageRows } from '../src/export';
+import { powershellPlan, reviewPacket, shellPlan, stageRows } from '../src/export';
 import type { Assumptions, RenameRow } from '../src/types';
 
 const assumptions: Assumptions = { caseInsensitive: true, unicode: 'NFC', platform: 'portable' };
@@ -103,6 +103,17 @@ describe('safety review', () => {
 
 describe('reversible exports', () => {
   const swap = [row("a's file.txt", 'b.txt', 1), row('b.txt', "a's file.txt", 2)];
+
+  it('refuses to put executable scripts in a packet with blocking findings', () => {
+    const blocked = analyze([row('../outside.txt', 'safe.txt', 1)], assumptions);
+    expect(() => reviewPacket(blocked, assumptions, true)).toThrow('Resolve every error finding before exporting scripts.');
+
+    const safe = analyze([row('a.txt', 'b.txt', 1)], assumptions);
+    const packet = reviewPacket(safe, assumptions, true);
+    expect(packet).toContain("mv -- 'a.txt' '.rpr-");
+    expect(packet).toContain("' 'b.txt'");
+    expect(() => reviewPacket(safe, assumptions, true, ['Malformed input'])).toThrow('Resolve every error finding before exporting scripts.');
+  });
 
   it('quotes shell paths and completes phase one before phase two', () => {
     const script = shellPlan(swap, assumptions, true);

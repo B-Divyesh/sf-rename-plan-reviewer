@@ -112,3 +112,11 @@ export function planBundle(review: Review, assumptions: Assumptions): string {
     findings: review.findings
   }, null, 2);
 }
+
+export function reviewPacket(review: Review, assumptions: Assumptions, live: boolean, inputErrors: readonly string[] = []): string {
+  if (!review.safe || inputErrors.length > 0) {
+    throw new Error('Resolve every error finding before exporting scripts.');
+  }
+
+  return `# Rename review packet\n\nGenerated ${new Date().toISOString()}\n\n## Findings\n\n\`\`\`json\n${planBundle(review, assumptions)}\n\`\`\`\n\n## Shell plan\n\n\`\`\`sh\n${shellPlan(review.rows, assumptions, live)}\n\`\`\`\n\n## PowerShell plan\n\n\`\`\`powershell\n${powershellPlan(review.rows, assumptions, live)}\n\`\`\`\n`;
+}
