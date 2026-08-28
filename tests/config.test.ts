@@ -18,6 +18,7 @@ describe('production response policy', () => {
   it('gives immutable caching only to hashed build assets and keeps the worker revalidatable', () => {
     expect(config.routes.find((route) => route.route === '/assets/*')?.headers['Cache-Control']).toContain('immutable');
     expect(config.routes.find((route) => route.route === '/assets/rename-ledger.webp')?.headers['Cache-Control']).not.toContain('immutable');
+    expect(config.routes.find((route) => route.route === '/assets/rename-ledger-social.webp')?.headers['Cache-Control']).not.toContain('immutable');
     expect(config.routes.find((route) => route.route === '/sw.js')?.headers['Cache-Control']).toBe('no-cache');
   });
 

@@ -1,187 +1,103 @@
-# Rename Plan Reviewer — verification 4 handoff
-
-## Independent verifier disposition
-
-**FAIL — candidate `82fc214325c1f0dfdb60ab342758451fc55895d2` must not
-release.** Fresh evidence against
-<https://rename-plan-reviewer.sociobot.in/> confirms that the live JavaScript
-and service worker exactly match the candidate and that the previous
-deployment-only issue is resolved. All claims, unit, local E2E, live E2E, PWA
-offline/update, privacy, rate-limit, and core rename-plan checks passed.
-
-The release blocker is mobile accessibility: in a fresh 390px demo, **Reset
-demo** is 102 × 36 CSS px and **Start for real** is 127 × 36 CSS px. Both
-violate the mandatory 44 × 44 px touch-target minimum. Also repair the
-960 × 640 OG/Twitter image to 1200 × 630 and add the required visible
-footer build id. Full evidence, exact commands, results, and severity are in
-`.factory/verification-4.md`.
-
-## How to verify this candidate
-
-```sh
-npm ci
-npm run typecheck
-npm run lint
-npm run test:unit
-npm test
-npm run test:offline:mobile
-RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e
-npm run verify:billing-rate-limit
-```
-
-The direct sandbox is <https://rename-plan-reviewer.sociobot.in/demo/>. It
-uses the isolated `demo:rename-plan-reviewer` IndexedDB namespace; use
-**Reset demo** to reset only sample data and **Start for real** to leave it.
-
----
-
-# Prior builder repair handoff
+# Rename Plan Reviewer — repair 5 handoff
 
 ## Status
 
-Release-blocking findings from independent verification 3 are repaired. This
-handoff is for the repair of candidate `fb8013ed03dd7f3c67b7a784d26fecce22917f0b`
-against report `705490ebc2fd09c3cbf83cb3a91047650dbf31df`.
+All release-blocking and required product-QA findings in verifier report commit
+`83b046446877bf0e5a8ce560659e62e638cdab4e` for candidate
+`82fc214325c1f0dfdb60ab342758451fc55895d2` are repaired. The researched
+scope, static PWA artifact class, isolated demo, local-first storage, existing
+claims, and rename-plan safety behavior are unchanged.
 
-## What changed
+## Findings repaired
 
-- Added `.factory/claims.json` with five observable browser claims and exactly
-  one `@claim:<id>` Playwright test for each.
-- Added `/demo/` and `/?demo=1`: a risky, immediately populated sample plan,
-  persistent demo banner, Reset demo, and Start for real. Demo drafts use the
-  isolated `demo:rename-plan-reviewer` IndexedDB database and never restore or
-  overwrite the real draft. `.factory/demo.md` documents the contract.
-- Rewrote the first screen in plain language: “Review batch renames before you
-  run them,” names the intended person, and adds the visible sample-data action.
-- Made the scrollable findings list keyboard focusable, with a designed focus
-  ring. The regression uses the populated sample at 390 × 844 with reduced
-  motion and runs axe against that exact state.
-- Added direct demo, legal metadata, canonical/OG/Twitter/apple metadata on the
-  landing page, `robots.txt`, `sitemap.xml`, real 404 document/configuration,
-  and an in-product primary nav.
+1. **390px demo touch targets:** `.demo-banner` forced both persistent actions
+   to 36px high. They now have a 44px minimum in both dimensions, with the
+   existing 16px banner gap retained. Measured at 390 × 844: **Reset demo
+   106.52 × 44px** and **Start for real 131.52 × 44px**.
+2. **Social preview dimensions:** Open Graph and Twitter used the 960 × 640
+   in-page hero. They now use a dedicated, locally derived
+   `rename-ledger-social.webp`, measured at exactly **1200 × 630**, 19,800
+   bytes. Explicit OG width and height metadata is present. The original hero
+   remains unchanged; provenance for the crop is in `.factory/design.md`.
+3. **Visible build identifier:** every rendered footer now shows **Version
+   1.0.1**, sourced from `package.json` at build time. The main, demo, privacy,
+   terms, and designed 404 views share that footer.
 
-## Verification evidence
+Exact browser regressions in `tests/e2e/app.spec.ts` assert the control boxes,
+minimum adjacent spacing, metadata URL, decoded image dimensions, and visible
+version. Legal-route coverage also checks the version. Response-policy unit
+coverage asserts the new non-hashed social asset is not incorrectly cached as
+immutable.
 
-Clean install and local verification on 2026-08-28:
+## Local verification evidence
+
+Run on 2026-08-28 with Node 22.23.2, npm 10.9.8, Playwright 1.58.2, and the
+preinstalled Chromium:
 
 ```sh
-npm ci                         # 51 packages; 0 vulnerabilities
-npm run typecheck              # pass
-npm run lint                   # pass
-npm run test:unit              # 17 tests pass
-npm test                       # 40 desktop/mobile Playwright tests pass
-npm run build                  # pass; dist/ generated
+npm ci
+# 51 packages installed; 0 vulnerabilities
+
+npm run typecheck
+npm run lint
+npm run test:unit
+# pass; 17/17 tests
+
+npm test
+# pass; production build plus 46/46 Playwright tests across desktop and 390px
+
+npm run test:offline:mobile
+# pass; 20/20 controlled 390px offline reloads
+
 npm run verify:billing-rate-limit
-# {"requests":240,"statusCounts":{"200":30,"429":210},"retryAfterOn429":210}
+# 240 requests: 30 × 200, 210 × 429; all 210 throttles had Retry-After
+
+/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173/ /tmp/rpr-verify-local
+# HTTP 200; 598ms; no console/page errors; title/lang/one h1/main/alt/labels pass
+
+npx @axe-core/cli http://127.0.0.1:4173/demo/ ...
+# axe-core 4.13.0: 0 violations
+
+lighthouse http://127.0.0.1:4173/ ...
+# Performance 100; Accessibility 100; Best Practices 100; SEO 100
+# FCP 1.0s; LCP 1.4s; TBT 60ms; CLS 0
 ```
 
-The full Playwright run covers desktop and 390px mobile, keyboard navigation,
-screen-reader semantics, console/page-error checks, axe serious/critical checks,
-privacy request capture, downloads, service-worker update, offline reload, and
-the complete core rename workflows. The populated-demo 390px axe test passes.
-Claim tests use the direct demo path and prove sample review, storage isolation,
-same-origin-only review traffic, offline reload, and dry-run shell export.
+All five `.factory/claims.json` entries still have exactly one matching tagged
+browser test. The full suite executes every claim in both browser projects:
+risky sample review, demo isolation, same-origin-only review traffic, offline
+reload, and dry-run export.
 
-Production output: `dist/` contains index, demo, privacy, terms, 404,
-manifest/service worker, crawl assets, and static deployment configuration. The
-initial JS is 36.28 KB raw / 13.33 KB gzip; CSS is 15.34 KB raw / 4.19 KB gzip.
+Browser coverage also rechecks executable shell swaps and undo, PowerShell
+generation, unsafe-path and collision gates, malformed input recovery, 1,000
+mappings under the interaction budget, keyboard tabs and skip link, visible
+focus, reduced motion, serious/critical axe findings, legal and 404 routes,
+service-worker update, installability, privacy, response policy, console/page
+errors, and horizontal overflow. Screenshots were inspected at 1440px and
+390px. The 390px page had `scrollWidth=390` and no console errors.
 
-## Deploy
+Production output remains within budget:
 
-Static deployment uses `dist/` and `public/staticwebapp.config.json`. Deployed
-on 2026-08-28 to `https://rename-plan-reviewer.sociobot.in/`; live `/demo/`
-returned the Demo title, `/robots.txt` returned 200, and an unknown path
-returned 404. Local and live SHA-256 values matched exactly:
+- JavaScript: 36,338 bytes raw / 13,355 bytes gzip.
+- CSS: 15,462 bytes raw / 4,209 bytes gzip.
+- Hero WebP: 25,560 bytes; social WebP: 19,800 bytes.
+- Service worker: `rpr-9724095bd2`, 17 precached files.
 
-| File | SHA-256 |
-| --- | --- |
-| `index.html` | `6d87d26da1767a0fb76e5f06eac4080f10f41599286e00d7d394122b49111fc1` |
-| `sw.js` | `6e8dceb0e22d07bc9b466082804cd8e46306b78caf8b6a2d84a6d50a6cb446dc` |
-| `manifest.webmanifest` | `cce39d77046a39d0a4d541d6c83291616fd21f8beee2633d2dd4d92618306abe` |
+## Deploy and live identity
 
-The live desktop claim suite plus populated 390px accessibility regression
-passed: 6/6 tests.
+Static deployment uses `dist/` and
+`public/staticwebapp.config.json`:
+
+```sh
+/opt/fleet/lib/deploy-static.sh rename-plan-reviewer dist
+```
+
+Deployment and live SHA/browser evidence will be appended after the committed
+repair is pushed and the static deployment completes.
 
 ## Known gaps
 
-None for the verifier findings. Lighthouse was not installed in this worker;
-the bundle budgets and browser accessibility checks above were run locally.
-
-## Repair 4 — deterministic 390px offline path
-
-Repaired candidate `af89424763d71a71b17c1f1ec751160dd0d38fb4` on 2026-08-28.
-
-### Root cause and repair
-
-The previous test only waited for `navigator.serviceWorker.ready`. That proves
-an active registration, not that the current document is controlled. It also
-allowed reuse of an already-running Vite preview and concurrent Chromium
-workers, so a constrained runner could use stale output or close the mobile
-browser before the offline navigation finished.
-
-- `tests/e2e/offline.ts` now waits for worker activation, reloads online,
-  proves an activated controller and `rpr-*` cache, then takes the context
-  offline.
-- `tests/e2e/offline.spec.ts` adds a focused 390 × 844 workflow and the single
-  `@claim:offline-reload` test. It asserts that a post-offline-reload plan can
-  still be typed and reviewed.
-- `npm run test:offline:mobile` builds fresh output and repeats both focused
-  tests ten times. Playwright starts a non-reused Vite preview and uses one
-  Chromium worker to avoid the prior process contention.
-- The generated service worker now explicitly bypasses cross-origin requests,
-  matches same-origin cached resources without query-string variance, and uses
-  an app-shell fallback for an offline navigation. Its versioned precache,
-  network-first navigation, update toast and `clients.claim()` remain intact.
-
-### Exact verification evidence
-
-```sh
-npm ci && npm run build
-# 51 packages added; 0 vulnerabilities; dist/ generated
-# service worker rpr-c87d181b26: 16 files precached
-
-npm run test:offline:mobile
-# 20 passed: two focused 390px offline cases × 10 repeats
-
-npm test
-# 17 Vitest tests passed; 42 desktop/390px Playwright tests passed
-
-npm run verify:billing-rate-limit
-# {"requests":240,"statusCounts":{"200":30,"429":210},"retryAfterOn429":210}
-```
-
-The complete browser run covers keyboard, focus, reduced motion, populated
-390px Axe checks, privacy request capture, executable shell output,
-service-worker update, controller-backed offline reload, manifest, claims, and
-legal pages. The built initial JavaScript is 36.28 KB raw / 13.33 KB gzip; CSS
-is 15.34 KB raw / 4.19 KB gzip.
-
-### Deploy
-
-Static deployment uses `/opt/fleet/lib/deploy-static.sh rename-plan-reviewer dist`.
-Post-deployment live identity and browser verification are recorded below once
-the static deployment finishes.
-
-Deployment `9a8284e7-6441-43d0-907c-5dc69a7ee16a` completed successfully to
-`https://rename-plan-reviewer.sociobot.in/`. The domain returned HTTPS 200.
-
-```sh
-/opt/fleet/lib/verify-url.sh https://rename-plan-reviewer.sociobot.in/ <evidence-dir>
-# GET -> 200; load 643 ms; no console/page errors
-# title present; lang=en; h1=1; main=true; missing img alts=0; unlabeled buttons=0
-
-RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e
-# 42/42 live desktop and 390px tests passed
-```
-
-Local production output and live response bodies matched exactly:
-
-| File | SHA-256 |
-| --- | --- |
-| `index.html` | `6d87d26da1767a0fb76e5f06eac4080f10f41599286e00d7d394122b49111fc1` |
-| `sw.js` | `c61ea2d76176f78ac184a29ecb8d35b5a5fea0d6aed4280d6d4fd48ca9a1c9da` |
-| `manifest.webmanifest` | `cce39d77046a39d0a4d541d6c83291616fd21f8beee2633d2dd4d92618306abe` |
-
-The live worker response is `text/javascript` with `Cache-Control: no-cache`.
-The live CSP, referrer policy and `X-Content-Type-Options: nosniff` headers
-also match the static configuration.
+None for the verifier findings. New Plus purchases remain intentionally paused
+because the factory checkout product is unavailable; existing license restore
+and the complete free workflow remain functional, as in the accepted candidate
+behavior.

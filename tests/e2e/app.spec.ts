@@ -75,6 +75,40 @@ test('keyboard path and accessibility have no serious violations', async ({ page
   }
 });
 
+test('demo controls meet mobile touch targets and keep safe spacing', async ({ page }) => {
+  await page.goto('/demo/');
+  const controls = [
+    page.getByRole('button', { name: 'Reset demo', exact: true }),
+    page.getByRole('link', { name: 'Start for real', exact: true })
+  ];
+  const boxes = await Promise.all(controls.map((control) => control.boundingBox()));
+  for (const box of boxes) {
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeGreaterThanOrEqual(44);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+  }
+  const [first, second] = boxes as [NonNullable<(typeof boxes)[number]>, NonNullable<(typeof boxes)[number]>];
+  const horizontalGap = Math.max(second.x - (first.x + first.width), first.x - (second.x + second.width));
+  const verticalGap = Math.max(second.y - (first.y + first.height), first.y - (second.y + second.height));
+  expect(Math.max(horizontalGap, verticalGap)).toBeGreaterThanOrEqual(8);
+});
+
+test('publishes the exact social preview and a visible build identifier', async ({ page }) => {
+  const socialUrl = await page.locator('meta[property="og:image"]').getAttribute('content');
+  expect(socialUrl).toBe('https://rename-plan-reviewer.sociobot.in/assets/rename-ledger-social.webp');
+  await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute('content', '1200');
+  await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute('content', '630');
+  const dimensions = await page.evaluate(async (url) => {
+    const image = new Image();
+    image.src = new URL(url!).pathname;
+    await image.decode();
+    return { width: image.naturalWidth, height: image.naturalHeight };
+  }, socialUrl);
+  expect(dimensions).toEqual({ width: 1200, height: 630 });
+  await expect(page.locator('[data-build-id]')).toBeVisible();
+  await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.1');
+});
+
 test('reviews 1,000 mappings within the interaction budget', async ({ page }) => {
   const input = ['current,new', ...Array.from({ length: 1_000 }, (_, index) => `in/file-${index}.jpg,out/photo-${String(index).padStart(4, '0')}.jpg`)].join('\n');
   const elapsed = await page.getByLabel('Current and new paths').evaluate((element, value) => {
@@ -113,6 +147,7 @@ test('privacy and terms pages remain semantic and accessible', async ({ page }) 
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.locator('main')).toHaveCount(1);
+    await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.1');
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
   }

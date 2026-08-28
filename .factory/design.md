@@ -38,3 +38,7 @@ Prompt sheet:
 > Use case: stylized-concept. Asset type: compact landing page hero spot illustration. Primary request: overhead editorial still life of a careful batch-file rename plan being reviewed before execution. Scene: warm ivory graph-paper notebook page, two small unlabeled file-tab cards connected by indigo pencil arrows, one vermilion collision circle, one forest-green proof tick, brass binder clip, faint eraser crumbs. Style: tactile cut-paper and colored-pencil editorial illustration, handmade lab notebook, sophisticated and restrained. Composition: horizontal 3:2, objects centered with generous paper around them, readable at small size. Lighting: soft northern-window light, subtle real paper shadows. Palette: warm ivory, graphite, deep indigo, vermilion, proof green, muted brass. Avoid: all text, letters, numbers, logos, brands, watermark, people, hands, screens, glossy 3D, gradients, photoreal file icons, accidental symbols.
 
 Generated with the factory image deployment through `/opt/fleet/lib/gen-image.sh` on 2026-08-28. Original generation; no external source assets. The selected PNG is retained with a JSON sidecar under `assets/src/`; shipped WebP is optimized to under 300 KB. Generated imagery is disclosed in the footer.
+
+The 1200 × 630 social preview is a center crop of that same original image,
+made locally with ImageMagick. It adds no third-party material or generated
+text and keeps the filename mappings, collision mark, and proof tick visible.

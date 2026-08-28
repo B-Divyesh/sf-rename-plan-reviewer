@@ -325,7 +325,7 @@ function findingHtml(finding: Finding): string {
 }
 
 function footer(): string {
-  return `<footer><p><span class="brand-mark" aria-hidden="true">↝</span> A Param Factory utility.</p><nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-rename-plan-reviewer">Source</a></nav><p class="provenance">Notebook illustration generated for this product with the factory image model.</p></footer>`;
+  return `<footer><p><span class="brand-mark" aria-hidden="true">↝</span> A Param Factory utility.</p><nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-rename-plan-reviewer">Source</a></nav><p class="build-id" data-build-id>Version ${escapeHtml(__APP_VERSION__)}</p><p class="provenance">Notebook illustration generated for this product with the factory image model.</p></footer>`;
 }
 
 function renderNotFound(): void {
