@@ -1,0 +1,9 @@
+{
+  "slug": "rename-plan-reviewer",
+  "title": "Rename Plan Reviewer",
+  "artifact_class": "pwa-offline",
+  "user": "A person preparing a batch rename from a spreadsheet or rule who needs to spot collisions, broken numbering, and unsafe paths before files are touched.",
+  "smallest_useful_product": "Local browser app that imports a current-to-new CSV or regex rule, validates path portability/collisions/cycles, computes a safe two-phase order, and exports a shell/PowerShell plan plus undo manifest.",
+  "success_measure": "On a fixture with swaps, duplicates, reserved names, and 1,000 mappings, it identifies 100% of unsafe mappings and outputs a reversible plan without changing files.",
+  "monetization": "one-time"
+}
