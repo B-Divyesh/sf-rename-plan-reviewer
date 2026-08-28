@@ -1,19 +1,16 @@
 import type { Assumptions, Finding, RenameRow, Review } from './types';
+import { canonicalPath, pathParts } from './path';
 
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
 const CONTROL = /[\u0000-\u001f\u007f]/;
 const WINDOWS_BAD = /[<>:"|?*]/;
-
-function pathParts(path: string): string[] {
-  return path.replaceAll('\\', '/').split('/');
-}
 
 function isAbsolute(path: string): boolean {
   return /^(?:[a-z]:|[\\/])/i.test(path);
 }
 
 function portableKey(path: string, assumptions: Assumptions): string {
-  let key = path.replaceAll('\\', '/');
+  let key = canonicalPath(path);
   if (assumptions.unicode !== 'none') key = key.normalize(assumptions.unicode);
   return assumptions.caseInsensitive ? key.toLocaleLowerCase('en-US') : key;
 }
@@ -100,8 +97,8 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
     if ((assumptions.platform === 'portable' || assumptions.platform === 'windows') && WINDOWS_BAD.test(row.next.replace(/^[a-z]:/i, ''))) add(findings, 'error', 'invalid-character', 'Path is not Windows-portable', 'Remove < > : " | ? * from the destination name.', [row.line]);
     if ((assumptions.platform === 'portable' || assumptions.platform === 'windows') && parts.some((part) => RESERVED.test(part))) add(findings, 'error', 'reserved-name', 'Destination uses a Windows reserved name', 'Rename CON, PRN, AUX, NUL, COM1–9, or LPT1–9.', [row.line]);
     if ((assumptions.platform === 'portable' || assumptions.platform === 'windows') && parts.some((part) => /[. ]$/.test(part))) add(findings, 'error', 'trailing-character', 'Name ends with a dot or space', 'Windows silently trims trailing dots and spaces, which can cause a collision.', [row.line]);
-    if (row.current === row.next) add(findings, 'note', 'unchanged', 'Mapping makes no change', 'This row will be skipped in generated scripts.', [row.line]);
-    else if (row.current.toLocaleLowerCase('en-US') === row.next.toLocaleLowerCase('en-US')) add(findings, 'warning', 'case-only', 'Case-only rename needs a temporary name', 'Case-insensitive filesystems cannot rename this directly. The generated two-phase plan handles it.', [row.line]);
+    if (canonicalPath(row.current) === canonicalPath(row.next)) add(findings, 'note', 'unchanged', 'Mapping makes no change', 'This row will be skipped in generated scripts.', [row.line]);
+    else if (canonicalPath(row.current).toLocaleLowerCase('en-US') === canonicalPath(row.next).toLocaleLowerCase('en-US')) add(findings, 'warning', 'case-only', 'Case-only rename needs a temporary name', 'Case-insensitive filesystems cannot rename this directly. The generated two-phase plan handles it.', [row.line]);
   });
 
   const normalizedSources = new Map<string, RenameRow[]>();
@@ -112,7 +109,7 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
     if (!normalizedSources.has(key)) normalizedSources.set(key, group);
   });
   rows.forEach((row) => {
-    const targetParts = row.next.replaceAll('\\', '/').split('/');
+    const targetParts = pathParts(row.next);
     for (let end = targetParts.length - 1; end > 0; end -= 1) {
       const parentSource = normalizedSources.get(portableKey(targetParts.slice(0, end).join('/'), assumptions))?.find((source) => source.id !== row.id);
       if (!parentSource) continue;
@@ -123,7 +120,7 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
 
   const normalizationGroups = new Map<string, RenameRow[]>();
   rows.filter((row) => row.next).forEach((row) => {
-    const key = row.next.normalize('NFC').toLocaleLowerCase('en-US');
+    const key = canonicalPath(row.next).normalize('NFC').toLocaleLowerCase('en-US');
     const group = normalizationGroups.get(key) ?? [];
     group.push(row);
     if (!normalizationGroups.has(key)) normalizationGroups.set(key, group);
@@ -135,7 +132,7 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
     }
   });
 
-  const cycles = findCycles(rows.filter((row) => row.current && row.next && row.current !== row.next), assumptions);
+  const cycles = findCycles(rows.filter((row) => row.current && row.next && canonicalPath(row.current) !== canonicalPath(row.next)), assumptions);
   cycles.forEach((cycle) => add(findings, 'note', 'cycle', 'Rename cycle detected and staged safely', `${cycle.join(' → ')} → ${cycle[0]}. The exported plan uses temporary names to break the cycle.`, rows.filter((row) => cycle.includes(row.current)).map((row) => row.line)));
   checkNumbering(rows, findings);
   findings.sort((a, b) => ({ error: 0, warning: 1, note: 2 }[a.severity] - { error: 0, warning: 1, note: 2 }[b.severity] || (a.rows[0] ?? 0) - (b.rows[0] ?? 0)));

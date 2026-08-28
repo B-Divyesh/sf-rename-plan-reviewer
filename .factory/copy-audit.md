@@ -8,6 +8,11 @@
 | Data stays in this browser. | 5 | Pass |
 | Works offline after first visit. | 5 | Pass |
 | Exports start as dry runs. | 6 | Pass |
+| Plus is priced at US $12 once. | 7 | Pass |
+| It adds a combined Markdown review packet with findings and both scripts. | 11 | Pass |
+| Every safety check, dry run, CSV and undo export stays free. | 10 | Pass |
+| Checkout is not available right now. | 6 | Pass |
+| Verify an existing license below. | 5 | Pass |
 
 No sentence exceeds 22 words and none uses a banned marketing word.
 

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -25,6 +25,52 @@ test('live UI export executes a quoted swap and is reversible', async ({ page })
     expect(output).toContain('Applied 2 renames.');
     expect(readFileSync(join(directory, "a's file.txt"), 'utf8')).toBe('second');
     expect(readFileSync(join(directory, 'b.txt'), 'utf8')).toBe('first');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('live UI export canonicalizes portable backslashes and repeated-separator dependencies', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByLabel('Current and new paths');
+  await input.fill('current,new\na.txt,folder\\b.txt');
+  await expect(page.getByText('No blocking risks found')).toBeVisible();
+  await page.getByLabel('Generate live commands').check();
+
+  let downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Export shell plan/ }).click();
+  let download = await downloadPromise;
+  let directory = mkdtempSync(join(tmpdir(), 'rpr-ui-backslash-'));
+  try {
+    writeFileSync(join(directory, 'a.txt'), 'source');
+    mkdirSync(join(directory, 'folder'));
+    const script = join(directory, 'plan.sh');
+    const content = readFileSync((await download.path())!, 'utf8');
+    expect(content).toContain("'folder/b.txt'");
+    expect(content).not.toContain("'folder\\b.txt'");
+    writeFileSync(script, content);
+    expect(execFileSync('/bin/sh', [script], { cwd: directory, encoding: 'utf8' })).toContain('Applied 1 renames.');
+    expect(readFileSync(join(directory, 'folder', 'b.txt'), 'utf8')).toBe('source');
+    expect(existsSync(join(directory, 'folder\\b.txt'))).toBe(false);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+
+  await input.fill('current,new\na.txt,folder//b.txt\nfolder/b.txt,c.txt');
+  await expect(page.getByText('No blocking risks found')).toBeVisible();
+  downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Export shell plan/ }).click();
+  download = await downloadPromise;
+  directory = mkdtempSync(join(tmpdir(), 'rpr-ui-repeated-'));
+  try {
+    writeFileSync(join(directory, 'a.txt'), 'first');
+    mkdirSync(join(directory, 'folder'));
+    writeFileSync(join(directory, 'folder', 'b.txt'), 'second');
+    const script = join(directory, 'plan.sh');
+    writeFileSync(script, readFileSync((await download.path())!, 'utf8'));
+    expect(execFileSync('/bin/sh', [script], { cwd: directory, encoding: 'utf8' })).toContain('Applied 2 renames.');
+    expect(readFileSync(join(directory, 'folder', 'b.txt'), 'utf8')).toBe('first');
+    expect(readFileSync(join(directory, 'c.txt'), 'utf8')).toBe('second');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

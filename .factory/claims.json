@@ -33,5 +33,12 @@
     "where": "landing fact, export controls",
     "test": "npm run build && npm run test:e2e -- --grep @claim:dry-run-export",
     "sandbox": "make the demo sample safe, download the shell plan, and assert its mode prints commands only"
+  },
+  {
+    "id": "plus-offer-status",
+    "claim": "Plus is priced at US $12 once and adds a combined review packet; checkout is currently unavailable, while existing licenses can still be verified.",
+    "where": "Plus section, terms",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:plus-offer-status",
+    "sandbox": "fresh browser context from /demo/; assert package and checkout status, then mock a valid existing-license response and export the combined packet"
   }
 ]

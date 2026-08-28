@@ -50,3 +50,28 @@ test('@claim:dry-run-export downloads a plan that prints commands instead of ren
   const download = await downloadPromise;
   expect(readFileSync((await download.path())!, 'utf8')).toContain('# Mode: DRY RUN — prints commands only');
 });
+
+test('@claim:plus-offer-status proves the stated Plus package and existing-license restore path', async ({ page }) => {
+  await page.context().route('https://api.sociobot.in/**', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ valid: true, reason: 'ok' }) });
+  });
+  await page.goto('/demo/');
+  await expect(page.getByText('Plus is priced at US $12 once.')).toBeVisible();
+  await expect(page.getByText('It adds a combined Markdown review packet with findings and both scripts.')).toBeVisible();
+  await expect(page.getByText('Every safety check, dry run, CSV and undo export stays free.')).toBeVisible();
+  await expect(page.getByText('Checkout is not available right now.')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Buy Plus/ })).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Start for real' }).click();
+  await page.getByLabel('Current and new paths').fill('current,new\na.txt,b.txt');
+  await page.getByLabel('Have a license? Paste it').fill('existing-license');
+  await page.getByRole('button', { name: 'Verify', exact: true }).click();
+  await expect(page.getByText('Plus restored on this device.')).toBeVisible();
+  const packetButton = page.getByRole('button', { name: 'Export Plus review packet' });
+  await expect(packetButton).toBeEnabled();
+  const downloadPromise = page.waitForEvent('download');
+  await packetButton.click();
+  const packet = readFileSync((await (await downloadPromise).path())!, 'utf8');
+  expect(packet).toContain('## Shell plan');
+  expect(packet).toContain('## PowerShell plan');
+});

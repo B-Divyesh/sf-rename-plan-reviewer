@@ -27,7 +27,7 @@ test('reviews risky input, fixes it, and downloads a dry-run plan', async ({ pag
   await page.getByRole('button', { name: /Export shell plan/ }).click();
   expect((await downloadPromise).suggestedFilename()).toBe('rename-plan.sh');
   expect(consoleErrors).toEqual([]);
-  await expect(page.getByText('New Plus purchases are temporarily unavailable')).toBeVisible();
+  await expect(page.getByText('Checkout is not available right now')).toBeVisible();
   await expect(page.getByRole('link', { name: /Buy Plus/ })).toHaveCount(0);
 });
 
@@ -106,7 +106,7 @@ test('publishes the exact social preview and a visible build identifier', async 
   }, socialUrl);
   expect(dimensions).toEqual({ width: 1200, height: 630 });
   await expect(page.locator('[data-build-id]')).toBeVisible();
-  await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.1');
+  await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.2');
 });
 
 test('reviews 1,000 mappings within the interaction budget', async ({ page }) => {
@@ -147,7 +147,7 @@ test('privacy and terms pages remain semantic and accessible', async ({ page }) 
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.locator('main')).toHaveCount(1);
-    await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.1');
+    await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.2');
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
   }

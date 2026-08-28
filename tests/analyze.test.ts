@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { analyze } from '../src/analyze';
@@ -150,5 +150,61 @@ describe('reversible exports', () => {
     expect(script).toContain('-LiteralPath');
     expect(script).toContain("a''s file.txt");
     expect(script).not.toContain('Destination folder is missing');
+  });
+
+  it('canonicalizes portable separators for each emitted command language', () => {
+    const portable = [row('source\\file.txt', 'target//nested\\file.txt', 1)];
+    const shell = shellPlan(portable, assumptions, true);
+    const powershell = powershellPlan(portable, assumptions, true);
+    expect(shell).toContain("[ -e 'source/file.txt' ]");
+    expect(shell).toContain("'target/nested/file.txt'");
+    expect(shell).not.toContain('\\\\');
+    expect(powershell).toContain("-LiteralPath 'source\\file.txt'");
+    expect(powershell).toContain("-Destination 'target\\nested\\file.txt'");
+    expect(powershell).not.toContain('//');
+  });
+
+  it('executes backslash and repeated-separator dependencies at their canonical POSIX paths', () => {
+    const cases = [
+      {
+        name: 'backslash',
+        rows: [row('a.txt', 'folder\\b.txt', 1)],
+        setup(directory: string) {
+          writeFileSync(join(directory, 'a.txt'), 'source');
+          mkdirSync(join(directory, 'folder'));
+        },
+        verify(directory: string) {
+          expect(readFileSync(join(directory, 'folder', 'b.txt'), 'utf8')).toBe('source');
+          expect(existsSync(join(directory, 'folder\\b.txt'))).toBe(false);
+          expect(readdirSync(directory)).not.toContain('folder\\b.txt');
+        }
+      },
+      {
+        name: 'repeated',
+        rows: [row('a.txt', 'folder//b.txt', 1), row('folder/b.txt', 'c.txt', 2)],
+        setup(directory: string) {
+          writeFileSync(join(directory, 'a.txt'), 'first');
+          mkdirSync(join(directory, 'folder'));
+          writeFileSync(join(directory, 'folder', 'b.txt'), 'second');
+        },
+        verify(directory: string) {
+          expect(readFileSync(join(directory, 'folder', 'b.txt'), 'utf8')).toBe('first');
+          expect(readFileSync(join(directory, 'c.txt'), 'utf8')).toBe('second');
+        }
+      }
+    ];
+
+    for (const testCase of cases) {
+      const directory = mkdtempSync(join(tmpdir(), `rpr-${testCase.name}-`));
+      try {
+        testCase.setup(directory);
+        const script = join(directory, 'plan.sh');
+        writeFileSync(script, shellPlan(testCase.rows, assumptions, true));
+        expect(execFileSync('/bin/sh', [script], { cwd: directory, encoding: 'utf8' })).toContain(`Applied ${testCase.rows.length} renames.`);
+        testCase.verify(directory);
+      } finally {
+        rmSync(directory, { recursive: true, force: true });
+      }
+    }
   });
 });
