@@ -5,8 +5,8 @@ Review batch renames before you run them.
 For people preparing risky spreadsheet or regex batch renames. Paste current and
 new paths, then inspect the findings before exporting a plan.
 
-Try the isolated sample at [the demo](/demo/). The demo contains a swap, a
-numbering gap, and a reserved Windows name.
+Try the isolated sample at [the demo](https://rename-plan-reviewer.sociobot.in/demo/).
+The demo contains a swap, a numbering gap, and a reserved Windows name.
 
 - Data stays in this browser.
 - Works offline after the first visit.
@@ -32,6 +32,7 @@ Each visitor-facing claim is mapped to an observable demo test in
 ## Privacy and terms
 
 Drafts use IndexedDB on this device. The demo uses a separate `demo:` database.
-See the [privacy policy](/privacy/) and [terms](/terms/).
+See the [privacy policy](https://rename-plan-reviewer.sociobot.in/privacy/) and
+[terms](https://rename-plan-reviewer.sociobot.in/terms/).
 
 MIT licensed. See [LICENSE](LICENSE).

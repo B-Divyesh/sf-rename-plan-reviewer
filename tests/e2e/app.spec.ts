@@ -18,7 +18,7 @@ test('reviews risky input, fixes it, and downloads a dry-run plan', async ({ pag
   const consoleErrors: string[] = [];
   page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
-  await page.getByRole('button', { name: 'Load risky example' }).click();
+  await page.getByRole('button', { name: 'Load risky sample plan' }).click();
   await expect(page.getByText('Plan needs correction')).toBeVisible();
   await expect(page.getByText('Destination uses a Windows reserved name')).toBeVisible();
   await page.getByLabel('Current and new paths').fill('current,new\na.txt,b.txt\nb.txt,a.txt');
@@ -131,7 +131,7 @@ test('publishes the exact social preview and a visible build identifier', async 
   }, socialUrl);
   expect(dimensions).toEqual({ width: 1200, height: 630 });
   await expect(page.locator('[data-build-id]')).toBeVisible();
-  await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.2');
+  await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.3');
 });
 
 test('reviews 1,000 mappings within the interaction budget', async ({ page }) => {
@@ -172,10 +172,43 @@ test('privacy and terms pages remain semantic and accessible', async ({ page }) 
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.locator('main')).toHaveCount(1);
-    await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.2');
+    await expect(page.locator('[data-build-id]')).toHaveText('Version 1.0.3');
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
   }
+});
+
+test('every route publishes complete metadata and focuses its heading after navigation', async ({ page }) => {
+  const routes = [
+    { path: '/demo/', title: 'Demo — Rename Plan Reviewer', canonical: '/demo/' },
+    { path: '/privacy/', title: 'Privacy — Rename Plan Reviewer', canonical: '/privacy/' },
+    { path: '/terms/', title: 'Terms — Rename Plan Reviewer', canonical: '/terms/' },
+    { path: '/404/', title: 'Page not found — Rename Plan Reviewer', canonical: '/404/' }
+  ];
+  for (const route of routes) {
+    await page.goto(route.path);
+    await expect(page).toHaveTitle(route.title);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://rename-plan-reviewer.sociobot.in${route.canonical}`);
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', '/manifest.webmanifest');
+    await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/icon.svg');
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', '/icons/icon-192.png');
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', route.title);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', `https://rename-plan-reviewer.sociobot.in${route.canonical}`);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://rename-plan-reviewer.sociobot.in/assets/rename-ledger-social.webp');
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+    await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute('content', route.title);
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute('content', 'https://rename-plan-reviewer.sociobot.in/assets/rename-ledger-social.webp');
+  }
+
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Demo', exact: true }).click();
+  await expect(page).toHaveURL(/\/demo\/$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  await expect(page.locator('#route-status')).toHaveText('Demo — Rename Plan Reviewer loaded');
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  await expect(page.locator('#route-status')).toHaveText('Rename Plan Reviewer — review batch renames loaded');
 });
 
 test('offers and applies an installed service-worker update', async ({ page }) => {

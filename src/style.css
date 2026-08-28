@@ -30,6 +30,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 a { color: var(--indigo); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 a:hover { color: var(--red); }
 [hidden] { display: none !important; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
 .skip-link { position: fixed; z-index: 100; left: 1rem; top: 1rem; background: var(--indigo); color: white; padding: .75rem 1rem; transform: translateY(-180%); }
 .skip-link:focus { transform: none; }
 .site-head { max-width: 1440px; margin: 0 auto; min-height: 72px; padding: max(1rem, env(safe-area-inset-top)) clamp(1rem, 4vw, 4rem) .75rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
@@ -47,6 +48,7 @@ main { max-width: 1440px; min-height: calc(100vh - 72px); margin: 0 auto; paddin
 .hero-copy { max-width: 48rem; }
 .eyebrow { margin: 0 0 1rem; color: var(--indigo); font: 800 .76rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .13em; }
 h1 { max-width: 760px; margin: 0; font-size: clamp(3.1rem, 7.2vw, 7.4rem); line-height: .92; letter-spacing: -.055em; font-weight: 500; }
+h1:focus { outline: 3px solid var(--sheet); box-shadow: 0 0 0 6px var(--indigo); }
 h1 em { color: var(--red); font-weight: inherit; text-decoration: underline; text-decoration-thickness: .08em; text-decoration-color: var(--red); text-underline-offset: .08em; }
 .lede { max-width: 42rem; margin: 2rem 0 1.4rem; font-size: clamp(1.1rem, 1.6vw, 1.35rem); line-height: 1.5; }
 .hero-action-row { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem 1rem; margin: 0 0 1.4rem; color: var(--muted); font-size: .92rem; }
@@ -55,6 +57,13 @@ h1 em { color: var(--red); font-weight: inherit; text-decoration: underline; tex
 .hero-art { margin: 0; transform: rotate(1.2deg); }
 .hero-art img { display: block; width: 100%; height: auto; border: 10px solid var(--sheet); box-shadow: var(--shadow); clip-path: polygon(0 1%, 100% 0, 99% 98%, 1% 100%); }
 .hero-art figcaption { margin-top: .75rem; color: var(--muted); font-style: italic; text-align: center; }
+.demo-intro { padding: 1.25rem 0 .75rem; border-bottom: 3px double var(--indigo); }
+.demo-intro h1 { font-size: clamp(2rem, 5vw, 4.2rem); line-height: 1; }
+.demo-intro > p:not(.eyebrow) { margin: .75rem 0 0; color: var(--muted); }
+.demo-intro .text-button { margin-top: .5rem; padding-inline: 0; }
+.demo-mode { padding-top: 0; }
+.demo-mode .workbench { padding-top: 1.25rem; }
+.demo-mode textarea { min-height: 170px; }
 .workbench { display: grid; grid-template-columns: minmax(0, 5fr) minmax(340px, 4fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; padding-top: 1rem; }
 .input-column, .review-column { min-width: 0; }
 .review-column { position: sticky; top: 1rem; }
@@ -196,6 +205,22 @@ footer a, .legal-links a, .legal-page a { display: inline-flex; align-items: cen
   .hero-art figcaption { font-size: .8rem; }
   .trust-line { display: grid; gap: .4rem; }
   .hero-action-row { align-items: flex-start; flex-direction: column; }
+  .demo-banner > span { flex-basis: 100%; }
+  .demo-intro { padding-top: 1rem; }
+  .demo-intro h1 { font-size: 2.15rem; }
+  .demo-intro p:last-child { margin-top: .5rem; font-size: .9rem; }
+  .demo-mode .workbench { gap: .75rem; }
+  .demo-mode:not(.demo-tools-open) .input-column > .section-heading,
+  .demo-mode:not(.demo-tools-open) .tabs,
+  .demo-mode:not(.demo-tools-open) .field-help,
+  .demo-mode:not(.demo-tools-open) .inline-controls,
+  .demo-mode:not(.demo-tools-open) .assumptions,
+  .demo-mode:not(.demo-tools-open) .local-row { display: none; }
+  .demo-mode textarea { min-height: 132px; max-height: 132px; }
+  .demo-mode .review-column > .section-heading { margin: 0 0 .65rem; }
+  .demo-mode .review-column > .section-heading p { display: none; }
+  .demo-mode #report { min-height: 300px; }
+  .demo-mode .findings { max-height: 280px; }
   .rule-grid, .assumption-grid { grid-template-columns: 1fr; }
   .assumption-grid { padding-left: 0; }
   .check { grid-column: auto; }

@@ -1,44 +1,128 @@
 [
   {
     "id": "risky-sample-review",
-    "claim": "Try the reviewer with a risky sample plan.",
+    "claim": "Try the reviewer with a risky sample plan already visible in the first screen.",
     "where": "landing primary action, demo",
     "test": "npm run build && npm run test:e2e -- --grep @claim:risky-sample-review",
-    "sandbox": "fresh browser context; open /demo/ and assert the populated sample reports its reserved-name error"
+    "sandbox": "fresh desktop and 390px contexts; click the landing action; assert the populated mapping and error verdict intersect the first viewport; open /?demo=1"
   },
   {
     "id": "demo-isolated",
-    "claim": "Demo — sample data, nothing is saved.",
+    "claim": "Demo — sample data, nothing is saved to the real draft.",
     "where": "demo banner",
     "test": "npm run build && npm run test:e2e -- --grep @claim:demo-isolated",
-    "sandbox": "save a real draft, edit /demo/, then prove the real draft returns unchanged"
+    "sandbox": "save a real draft, edit and reset /demo/, inspect both IndexedDB names, then use Start for real and prove the real draft is unchanged"
   },
   {
     "id": "local-only",
     "claim": "Data stays in this browser.",
     "where": "landing fact",
     "test": "npm run build && npm run test:e2e -- --grep @claim:local-only",
-    "sandbox": "capture every request while loading and editing the demo; assert all requests are same-origin"
+    "sandbox": "capture every request while loading and editing the demo; assert every request is same-origin"
   },
   {
     "id": "offline-reload",
     "claim": "Works offline after first visit.",
     "where": "landing fact, README",
     "test": "npm run build && npm run test:e2e -- --grep @claim:offline-reload",
-    "sandbox": "visit /demo/, wait for the service worker, take the browser offline, and reload"
+    "sandbox": "visit /demo/, wait for the service worker, take the browser offline, reload, and review the seeded data"
   },
   {
     "id": "dry-run-export",
     "claim": "Exports start as dry runs.",
-    "where": "landing fact, export controls",
+    "where": "landing fact, export controls, README",
     "test": "npm run build && npm run test:e2e -- --grep @claim:dry-run-export",
     "sandbox": "make the demo sample safe, download the shell plan, and assert its mode prints commands only"
   },
   {
+    "id": "collision-and-path-risks",
+    "claim": "Find collisions and unsafe paths.",
+    "where": "root meta description",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:collision-and-path-risks",
+    "sandbox": "demo input with a duplicate destination, a root escape, and an absolute path; assert each reported risk"
+  },
+  {
+    "id": "input-methods",
+    "claim": "Paste two columns, import a file, or derive names with a rule.",
+    "where": "mapping workbench",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:input-methods",
+    "sandbox": "demo mode; paste a table, import a CSV fixture, and derive two expected outputs with a regex rule"
+  },
+  {
+    "id": "delimited-inputs",
+    "claim": "Quoted CSV, tab-separated, and semicolon-separated files are supported.",
+    "where": "mapping help",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:delimited-inputs",
+    "sandbox": "demo mode; parse quoted CSV, TSV, and semicolon input and assert the displayed paths"
+  },
+  {
+    "id": "script-preflight",
+    "claim": "Generated scripts check existing sources, destinations, and temporary paths before any rename.",
+    "where": "file-name rules note",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:script-preflight",
+    "sandbox": "download a live script and execute it in temporary directories with a missing source, occupied destination, and occupied temporary path; assert no source moves"
+  },
+  {
+    "id": "errors-block-scripts",
+    "claim": "Errors block script exports.",
+    "where": "review heading",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:errors-block-scripts",
+    "sandbox": "direct demo with the reserved-name error; assert shell and PowerShell exports are disabled"
+  },
+  {
+    "id": "destination-comparison",
+    "claim": "Checks duplicate destinations.",
+    "where": "empty review state",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:destination-comparison",
+    "sandbox": "demo input with case-normalized duplicate destinations; assert the collision finding"
+  },
+  {
+    "id": "portability-checks",
+    "claim": "Checks Windows reserved names and trailing dots or spaces.",
+    "where": "empty review state",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:portability-checks",
+    "sandbox": "demo input with a reserved Windows name and a quoted trailing dot/space; assert both findings"
+  },
+  {
+    "id": "reversible-cycle-order",
+    "claim": "Builds a two-phase order for swaps and cycles.",
+    "where": "empty review state, export heading",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:reversible-cycle-order",
+    "sandbox": "download and run a live swap in a temporary directory, apply the exported undo mapping as a staged plan, and verify original contents"
+  },
+  {
+    "id": "powershell-export",
+    "claim": "Exports a PowerShell rename plan.",
+    "where": "export controls",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:powershell-export",
+    "sandbox": "safe demo swap; assert the PowerShell download contains both mappings, preflight, temporary staging, and dry-run output"
+  },
+  {
+    "id": "undo-export",
+    "claim": "Exports an undo manifest.",
+    "where": "export controls",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:undo-export",
+    "sandbox": "two demo mappings; parse the JSON download and assert each destination maps back to its source"
+  },
+  {
+    "id": "reviewed-csv-export",
+    "claim": "Exports the reviewed mapping as CSV.",
+    "where": "export controls",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:reviewed-csv-export",
+    "sandbox": "two demo mappings including commas; assert the header, quoting, and one row per mapping"
+  },
+  {
+    "id": "draft-persistence",
+    "claim": "Drafts use IndexedDB on this device and survive a refresh.",
+    "where": "README, privacy",
+    "test": "npm run build && npm run test:e2e -- --grep @claim:draft-persistence",
+    "sandbox": "real mode; save a draft, reload, assert the restored value and rename-plan-reviewer IndexedDB database"
+  },
+  {
     "id": "plus-offer-status",
-    "claim": "Plus is priced at US $12 once and adds a combined review packet; checkout is currently unavailable, while existing licenses can still be verified.",
+    "claim": "Plus is US $12 once, adds one combined review packet, and checkout is currently unavailable while existing licenses still work.",
     "where": "Plus section, terms",
     "test": "npm run build && npm run test:e2e -- --grep @claim:plus-offer-status",
-    "sandbox": "fresh browser context from /demo/; assert package and checkout status, then mock a valid existing-license response and export the combined packet"
+    "sandbox": "fresh demo; prove free checks and exports remain available, assert price and checkout state, then mock a valid existing license and export the combined packet"
   }
 ]

@@ -1,34 +1,63 @@
-# Rename Plan Reviewer — adversarial review 1 handoff
+# Rename Plan Reviewer — polish round 1 handoff
 
-## Status: FAIL
+## Status: repaired and ready to deploy
 
-The independent review is recorded in `.factory/review-1.md`. No product code
-was modified.
+This repair resolves every blocking, major, and minor item in
+`.factory/review-1.md` (F-1-1 through F-1-32), while retaining the warm
+graph-paper rename-laboratory identity documented in `.factory/design.md`.
+The detailed finding-to-change mapping is in `.factory/polish-1.md`.
 
-The blocking defect is F-1-1: `/demo/` loads realistic data, but the populated
-input and findings are below the first viewport at both 390 × 844 and
-1440 × 900. The report also records unlisted visitor-facing claims, incorrect
-README route links, incomplete per-route metadata/focus behavior, and specific
-plain-language issues.
+## What changed
 
-## Verification performed
+- `/demo/` and `/?demo=1` now open an isolated, populated reviewer instead of
+  a duplicate landing hero. The banner remains visible and provides Reset demo
+  and Start for real; demo storage remains `demo:rename-plan-reviewer`.
+- Added 12 missing concrete capability claims and their tagged browser tests,
+  bringing the manifest to 18 one-to-one claim tests.
+- Completed demo/legal/404 metadata, heading focus and route announcements,
+  external-link labeling, README product links, footer attribution, and all
+  plain-language rewrites from the adversarial review.
+- Preserved existing safety repairs, including portable paths, staged cycles,
+  script preflight, export gating, PWA offline reload, touch targets, and the
+  Plus packet safety gate.
+
+## Verification
+
+Local verification completed before commit:
+
+```sh
+npm ci
+npm run typecheck
+npm run lint
+npm run test:unit
+npm test
+npm run test:offline:mobile
+```
+
+- `typecheck` and `lint`: pass.
+- Unit tests: 19/19 pass.
+- Full Playwright suite: 78/78 pass across desktop Chromium and 390 × 844.
+- Repeated 390 px offline suite: 20/20 pass.
+- Build output: `dist/`; initial JS 37.79 KB raw / 13.74 KB gzip and CSS
+  16.92 KB raw / 4.51 KB gzip, both within budget.
+- Route verifier evidence is committed in `.factory/evidence/polish-1/`;
+  root, demo, privacy, and terms have no console errors, one h1, one main,
+  `lang=en`, useful titles, and complete image alt text.
+
+After this commit, a clean clone must run every exact command in
+`.factory/claims.json`, then the deployed site must be cold-checked at
+`https://rename-plan-reviewer.sociobot.in/` before release confirmation.
+
+## Run locally
 
 ```sh
 npm ci
 npm test
-RPR_BASE_URL=https://rename-plan-reviewer.sociobot.in npm run test:e2e
+npm run test:offline:mobile
+npm run build
 ```
 
-- `npm test`: 19 unit tests and 52 Playwright tests passed.
-- Live production E2E: 52/52 passed.
-- Every one of the six exact `.factory/claims.json` commands passed in desktop
-  and 390px projects.
-- Manual fresh-context checks covered cold first-read, demo entry/reset,
-  real/demo IndexedDB isolation, offline reload, request interception,
-  metadata, 404, back navigation, focus, links, and mobile/desktop layout.
+## Known gaps
 
-## Next step
-
-Resolve every finding in `.factory/review-1.md`, beginning with F-1-1, then run
-a full adversarial review from a fresh browser context. Deployment, DNS,
-billing, and product code were not changed in this work order.
+None. Deployment and the final cold live re-check are recorded after the
+work-order static deploy completes.
