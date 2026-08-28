@@ -33,7 +33,10 @@ function untouchedTargets(staged: StagedRename[], caseInsensitive: boolean): str
 }
 
 function targetDirectories(staged: StagedRename[]): string[] {
-  return [...new Set(staged.map((row) => row.next.replaceAll('\\', '/')).map((target) => target.slice(0, target.lastIndexOf('/'))).filter(Boolean))];
+  return [...new Set(staged.map((row) => row.next.replaceAll('\\', '/')).map((target) => {
+    const slash = target.lastIndexOf('/');
+    return slash >= 0 ? target.slice(0, slash) : '';
+  }).filter(Boolean))];
 }
 
 export function shellPlan(rows: RenameRow[], assumptions: Assumptions, live: boolean): string {

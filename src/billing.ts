@@ -2,9 +2,10 @@ const SLUG = 'rename-plan-reviewer';
 const STORAGE_KEY = `sb_license:${SLUG}`;
 const VERDICT_KEY = `${STORAGE_KEY}:verdict`;
 const DAY = 86_400_000;
-const API_BASE = (import.meta.env.VITE_BILLING_BASE as string | undefined) ?? 'https://pilot-api.sociobot.in/api/v1';
+const API_BASE = (import.meta.env.VITE_BILLING_BASE as string | undefined) ?? 'https://api.sociobot.in/api/v1';
 
 export const buyUrl = `${API_BASE}/products/${SLUG}/checkout`;
+export const purchasesEnabled = import.meta.env.VITE_PURCHASES_ENABLED === 'true';
 
 interface Verdict {
   valid: boolean;

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node scripts/build-sw.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run && npm run build && playwright test",
     "test:unit": "vitest run",

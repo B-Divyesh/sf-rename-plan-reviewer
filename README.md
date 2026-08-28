@@ -37,7 +37,7 @@ npm run preview
 
 ## Billing configuration
 
-The default checkout/verification host is the Sociobot pilot API for staging. Set `VITE_BILLING_BASE=https://api.sociobot.in/api/v1` for production builds after the factory registers the product. No payment provider or product ID is embedded in this repository.
+License verification uses the production Sociobot API by default. New purchase links are intentionally hidden while the factory product is unregistered, so users never reach a broken checkout. After the factory enables the product, build with `VITE_PURCHASES_ENABLED=true`; staging may additionally set `VITE_BILLING_BASE=https://pilot-api.sociobot.in/api/v1`. No payment provider or product ID is embedded in this repository.
 
 ## Privacy, design, and deployment
 

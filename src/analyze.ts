@@ -4,6 +4,14 @@ const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
 const CONTROL = /[\u0000-\u001f\u007f]/;
 const WINDOWS_BAD = /[<>:"|?*]/;
 
+function pathParts(path: string): string[] {
+  return path.replaceAll('\\', '/').split('/');
+}
+
+function isAbsolute(path: string): boolean {
+  return /^(?:[a-z]:|[\\/])/i.test(path);
+}
+
 function portableKey(path: string, assumptions: Assumptions): string {
   let key = path.replaceAll('\\', '/');
   if (assumptions.unicode !== 'none') key = key.normalize(assumptions.unicode);
@@ -20,7 +28,7 @@ function duplicates(rows: RenameRow[], getValue: (row: RenameRow) => string, ass
     const key = portableKey(getValue(row), assumptions);
     const group = grouped.get(key) ?? [];
     group.push(row);
-    grouped.set(key, group);
+    if (!grouped.has(key)) grouped.set(key, group);
   });
   return new Map([...grouped].filter(([, group]) => group.length > 1));
 }
@@ -64,9 +72,10 @@ function checkNumbering(rows: RenameRow[], findings: Finding[]): void {
   for (const group of groups.values()) {
     if (group.length < 2) continue;
     const ordered = [...new Set(group.map((item) => item.number))].sort((a, b) => a - b);
+    const present = new Set(ordered);
     const missing: number[] = [];
     for (let number = ordered[0]; number < ordered.at(-1)! && missing.length < 8; number += 1) {
-      if (!ordered.includes(number)) missing.push(number);
+      if (!present.has(number)) missing.push(number);
     }
     if (missing.length) add(findings, 'warning', 'number-gap', 'Numbering has a gap', `Missing ${missing.join(', ')} in a destination sequence. Confirm that the gap is intentional.`, group.map((item) => item.row.line));
   }
@@ -80,11 +89,12 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
   targetDupes.forEach((group) => add(findings, 'error', 'target-collision', 'Two renames share a destination', 'These paths resolve to the same destination under the selected filesystem assumptions.', group.map((row) => row.line)));
 
   rows.forEach((row) => {
-    const target = row.next.replaceAll('\\', '/');
-    const parts = target.split('/');
+    const parts = pathParts(row.next);
     if (!row.current) add(findings, 'error', 'missing-source', 'Current path is empty', 'Add the file’s current relative path.', [row.line]);
     if (!row.next) add(findings, 'error', 'missing-target', 'New path is empty', 'Add the intended destination path.', [row.line]);
-    if (/^(?:[a-z]:\/|\/|\\\\)/i.test(row.next)) add(findings, 'error', 'absolute-path', 'Absolute path is unsafe', 'Use a path relative to the folder where the exported script will run.', [row.line]);
+    if (isAbsolute(row.current)) add(findings, 'error', 'source-absolute-path', 'Source path is outside the reviewed root', 'Use the file’s path relative to the folder where the exported script will run.', [row.line]);
+    if (pathParts(row.current).includes('..')) add(findings, 'error', 'source-path-traversal', 'Source path leaves the working folder', 'Remove “..” segments so the script cannot pull in a file from outside the reviewed folder.', [row.line]);
+    if (isAbsolute(row.next)) add(findings, 'error', 'absolute-path', 'Absolute path is unsafe', 'Use a path relative to the folder where the exported script will run.', [row.line]);
     if (parts.includes('..')) add(findings, 'error', 'path-traversal', 'Path leaves the working folder', 'Remove “..” segments so the rename stays inside the reviewed folder.', [row.line]);
     if (CONTROL.test(row.next)) add(findings, 'error', 'control-character', 'Path contains a control character', 'Remove hidden control characters from the destination.', [row.line]);
     if ((assumptions.platform === 'portable' || assumptions.platform === 'windows') && WINDOWS_BAD.test(row.next.replace(/^[a-z]:/i, ''))) add(findings, 'error', 'invalid-character', 'Path is not Windows-portable', 'Remove < > : " | ? * from the destination name.', [row.line]);
@@ -94,11 +104,21 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
     else if (row.current.toLocaleLowerCase('en-US') === row.next.toLocaleLowerCase('en-US')) add(findings, 'warning', 'case-only', 'Case-only rename needs a temporary name', 'Case-insensitive filesystems cannot rename this directly. The generated two-phase plan handles it.', [row.line]);
   });
 
-  const normalizedSources = rows.filter((row) => row.current).map((row) => ({ row, path: row.current.replaceAll('\\', '/').replace(/\/$/, '') }));
+  const normalizedSources = new Map<string, RenameRow[]>();
+  rows.filter((row) => row.current).forEach((row) => {
+    const key = portableKey(row.current.replace(/[\\/]$/, ''), assumptions);
+    const group = normalizedSources.get(key) ?? [];
+    group.push(row);
+    if (!normalizedSources.has(key)) normalizedSources.set(key, group);
+  });
   rows.forEach((row) => {
-    const target = row.next.replaceAll('\\', '/');
-    const parentSource = normalizedSources.find((source) => source.row.id !== row.id && target.startsWith(`${source.path}/`));
-    if (parentSource) add(findings, 'error', 'moving-parent', 'Destination sits inside another moving path', `Row ${parentSource.row.line} moves “${parentSource.row.current}”, so this destination folder may disappear during staging. Split these changes into separate plans.`, [parentSource.row.line, row.line]);
+    const targetParts = row.next.replaceAll('\\', '/').split('/');
+    for (let end = targetParts.length - 1; end > 0; end -= 1) {
+      const parentSource = normalizedSources.get(portableKey(targetParts.slice(0, end).join('/'), assumptions))?.find((source) => source.id !== row.id);
+      if (!parentSource) continue;
+      add(findings, 'error', 'moving-parent', 'Destination sits inside another moving path', `Row ${parentSource.line} moves “${parentSource.current}”, so this destination folder may disappear during staging. Split these changes into separate plans.`, [parentSource.line, row.line]);
+      break;
+    }
   });
 
   const normalizationGroups = new Map<string, RenameRow[]>();
@@ -106,7 +126,7 @@ export function analyze(rows: RenameRow[], assumptions: Assumptions): Review {
     const key = row.next.normalize('NFC').toLocaleLowerCase('en-US');
     const group = normalizationGroups.get(key) ?? [];
     group.push(row);
-    normalizationGroups.set(key, group);
+    if (!normalizationGroups.has(key)) normalizationGroups.set(key, group);
   });
   normalizationGroups.forEach((group) => {
     const exactForms = new Set(group.map((row) => row.next));

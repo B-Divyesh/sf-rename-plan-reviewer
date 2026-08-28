@@ -1,7 +1,7 @@
 import './style.css';
 import { analyze } from './analyze';
 import { parseDelimited, rowsFromRule, toCsv } from './csv';
-import { buyUrl, cachedUnlock, captureLicense, restoreLicense, verifyLicense } from './billing';
+import { buyUrl, cachedUnlock, captureLicense, purchasesEnabled, restoreLicense, verifyLicense } from './billing';
 import { planBundle, powershellPlan, shellPlan, undoManifest } from './export';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import type { Assumptions, Draft, Finding, RenameRow, Severity } from './types';
@@ -19,6 +19,7 @@ const DEFAULT_DRAFT: Draft = { version: 1, mode: 'csv', input: '', sourceList: '
 
 async function startApp(): Promise<void> {
   captureLicense();
+  app.innerHTML = shell();
   let draft = DEFAULT_DRAFT;
   let storageMessage = 'Drafts stay on this device.';
   try {
@@ -35,9 +36,9 @@ async function startApp(): Promise<void> {
   let parseErrors: string[] = [];
   let rows: RenameRow[] = [];
   let saveTimer = 0;
+  let reviewFrame = 0;
   let installPrompt: Event | undefined;
 
-  app.innerHTML = shell();
   const $ = <T extends Element>(selector: string): T => app.querySelector<T>(selector)!;
   const csvPanel = $<HTMLElement>('#csv-panel');
   const rulePanel = $<HTMLElement>('#rule-panel');
@@ -112,9 +113,29 @@ async function startApp(): Promise<void> {
     $('#live-warning').toggleAttribute('hidden', !liveInput.checked);
   }
 
-  function update(): void { review(); queueSave(); }
+  function update(): void {
+    queueSave();
+    if (reviewFrame) return;
+    reviewFrame = requestAnimationFrame(() => {
+      reviewFrame = 0;
+      review();
+    });
+  }
 
-  app.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((tab) => tab.addEventListener('click', () => { setMode(tab.dataset.mode as 'csv' | 'rule'); queueSave(); }));
+  const tabs = [...app.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => { setMode(tab.dataset.mode as 'csv' | 'rule'); queueSave(); });
+    tab.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const current = tabs.indexOf(tab);
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      const nextTab = tabs[next];
+      setMode(nextTab.dataset.mode as 'csv' | 'rule');
+      nextTab.focus();
+      queueSave();
+    });
+  });
   [csvInput, sourceInput, patternInput, replacementInput].forEach((control) => control.addEventListener('input', update));
   [flagsInput, delimiterInput, liveInput, platformInput, unicodeInput, caseInput].forEach((control) => control.addEventListener('change', update));
 
@@ -217,6 +238,9 @@ async function startApp(): Promise<void> {
 }
 
 function shell(): string {
+  const purchaseAction = purchasesEnabled
+    ? `<a id="buy-plus" class="primary-link" href="${escapeHtml(buyUrl)}">Buy Plus — $12 once</a>`
+    : `<p id="buy-plus" class="purchase-paused">New Plus purchases are temporarily unavailable. Existing licenses can still be restored below.</p>`;
   return `<header class="site-head"><a class="brand" href="/" aria-label="Rename Plan Reviewer home"><span class="brand-mark" aria-hidden="true">↝</span><span>Rename Plan Reviewer</span></a><div class="head-actions"><span id="connection" class="connection">On-device</span><button id="install-app" class="text-button" hidden>Install app</button></div></header>
   <main id="main" tabindex="-1">
     <section class="hero" aria-labelledby="page-title"><div class="hero-copy"><p class="eyebrow">BATCH RENAME / PRE-FLIGHT</p><h1 id="page-title">Catch the collision<br><em>before</em> the rename.</h1><p class="lede">Turn spreadsheet mappings or regex rules into a reviewed, reversible plan. Your paths never leave this browser.</p><div class="trust-line"><span>✓ No file access</span><span>✓ Works offline</span><span>✓ Dry run first</span></div></div><figure class="hero-art"><img src="/assets/rename-ledger.webp" width="960" height="640" alt="Paper file tabs connected by pencil arrows, with a collision mark and a green check" fetchpriority="high" decoding="async"><figcaption>A rename is a hypothesis until you run it.</figcaption></figure></section>
@@ -231,7 +255,7 @@ function shell(): string {
       <div class="review-column"><div class="section-heading"><span class="step">03</span><div><h2>Review the evidence</h2><p>Errors block scripts. Warnings need your judgment.</p></div></div><section id="report" aria-live="polite" aria-label="Review findings"></section></div>
     </section>
     <section class="export-section"><div class="section-heading"><span class="step">04</span><div><h2>Take away a reversible plan</h2><p id="export-state">Add mappings to prepare exports.</p></div></div><div class="live-toggle"><label class="switch"><input id="live-commands" type="checkbox"><span><strong>Generate live commands</strong><small>Off by default. Leave off until the printed dry run is correct.</small></span></label><p id="live-warning" class="live-warning" hidden><strong>Live mode:</strong> exported scripts will rename files. Back up first.</p></div><div class="export-grid"><button data-export="shell" data-safe-export><span class="file-type">.SH</span><span><strong>Export shell plan</strong><small>macOS / Linux, safely quoted</small></span></button><button data-export="powershell" data-safe-export><span class="file-type">.PS1</span><span><strong>Export PowerShell</strong><small>Windows, literal paths</small></span></button><button data-export="manifest"><span class="file-type">↶</span><span><strong>Export undo manifest</strong><small>JSON destinations → originals</small></span></button><button data-export="csv"><span class="file-type">.CSV</span><span><strong>Export reviewed mapping</strong><small>Your portable source of truth</small></span></button></div></section>
-    <section class="plus-section" aria-labelledby="plus-title"><div><p class="eyebrow">OPTIONAL BENCH UPGRADE</p><h2 id="plus-title">Keep the reviewer free. Pack the paperwork with Plus.</h2><p>One-time US $12. Plus adds a combined Markdown review packet with findings and both scripts. Every safety check, dry run, CSV and undo export stays free.</p><p class="legal-links">Sociobot/Dodo is merchant of record. <a href="/terms/">Terms</a> · <a href="/privacy/">Privacy</a></p></div><div class="license-box"><a id="buy-plus" class="primary-link" href="${escapeHtml(buyUrl)}">Buy Plus — $12 once</a><form id="restore-license"><label for="license-token">Have a license? Paste it</label><div class="restore-row"><input id="license-token" type="password" autocomplete="off"><button>Verify</button></div></form><button id="export-packet" disabled>Export Plus review packet</button><p id="plus-state" role="status">Free reviewer active. Plus is optional.</p></div></section>
+    <section class="plus-section" aria-labelledby="plus-title"><div><p class="eyebrow">OPTIONAL BENCH UPGRADE</p><h2 id="plus-title">Keep the reviewer free. Pack the paperwork with Plus.</h2><p>One-time US $12. Plus adds a combined Markdown review packet with findings and both scripts. Every safety check, dry run, CSV and undo export stays free.</p><p class="legal-links">Sociobot/Dodo is merchant of record. <a href="/terms/">Terms</a> · <a href="/privacy/">Privacy</a></p></div><div class="license-box">${purchaseAction}<form id="restore-license"><label for="license-token">Have a license? Paste it</label><div class="restore-row"><input id="license-token" type="password" autocomplete="off"><button>Verify</button></div></form><button id="export-packet" disabled>Export Plus review packet</button><p id="plus-state" role="status">Free reviewer active. Plus is optional.</p></div></section>
   </main>${footer()}<div id="toast" class="toast" role="status" hidden></div>`;
 }
 

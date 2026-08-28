@@ -6,11 +6,12 @@ export interface ParseResult {
 }
 
 export function parseDelimited(text: string, delimiter = ','): ParseResult {
-  const records: string[][] = [];
+  const records: Array<Array<{ value: string; quoted: boolean }>> = [];
   const errors: string[] = [];
-  let record: string[] = [];
+  let record: Array<{ value: string; quoted: boolean }> = [];
   let field = '';
   let quoted = false;
+  let fieldWasQuoted = false;
   let line = 1;
   let recordLine = 1;
 
@@ -30,15 +31,18 @@ export function parseDelimited(text: string, delimiter = ','): ParseResult {
     }
     if (char === '"' && field.length === 0) {
       quoted = true;
+      fieldWasQuoted = true;
     } else if (char === delimiter) {
-      record.push(field);
+      record.push({ value: field, quoted: fieldWasQuoted });
       field = '';
+      fieldWasQuoted = false;
     } else if (char === '\n' || char === '\r') {
       if (char === '\r' && text[index + 1] === '\n') index += 1;
-      record.push(field);
-      if (record.some((cell) => cell.trim() !== '')) records.push(record);
+      record.push({ value: field, quoted: fieldWasQuoted });
+      if (record.some((cell) => cell.value.trim() !== '')) records.push(record);
       record = [];
       field = '';
+      fieldWasQuoted = false;
       line += 1;
       recordLine = line;
     } else {
@@ -47,10 +51,10 @@ export function parseDelimited(text: string, delimiter = ','): ParseResult {
   }
 
   if (quoted) errors.push(`Line ${recordLine}: an opening quote is not closed.`);
-  record.push(field);
-  if (record.some((cell) => cell.trim() !== '')) records.push(record);
+  record.push({ value: field, quoted: fieldWasQuoted });
+  if (record.some((cell) => cell.value.trim() !== '')) records.push(record);
 
-  const first = records[0]?.map((value) => value.trim().toLowerCase()) ?? [];
+  const first = records[0]?.map(({ value }) => value.trim().toLowerCase()) ?? [];
   const hasHeader = first.length >= 2 && ['current', 'old', 'source', 'from'].includes(first[0]) && ['new', 'next', 'target', 'to'].includes(first[1]);
   const start = hasHeader ? 1 : 0;
   const rows: RenameRow[] = [];
@@ -61,11 +65,12 @@ export function parseDelimited(text: string, delimiter = ','): ParseResult {
       errors.push(`Line ${physicalLine}: expected two columns (current and new).`);
       continue;
     }
-    if (cells.length > 2 && cells.slice(2).some((cell) => cell.trim())) {
+    if (cells.length > 2 && cells.slice(2).some((cell) => cell.value.trim())) {
       errors.push(`Line ${physicalLine}: found extra columns; quote paths that contain the delimiter.`);
       continue;
     }
-    rows.push({ id: `row-${physicalLine}`, current: cells[0].trim(), next: cells[1].trim(), line: physicalLine });
+    const value = (cell: { value: string; quoted: boolean }): string => cell.quoted ? cell.value : cell.value.trim();
+    rows.push({ id: `row-${physicalLine}`, current: value(cells[0]), next: value(cells[1]), line: physicalLine });
   }
   return { rows, errors };
 }

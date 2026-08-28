@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { analyze } from '../src/analyze';
 import { parseDelimited, rowsFromRule } from '../src/csv';
 import { powershellPlan, shellPlan, stageRows } from '../src/export';
@@ -12,6 +16,13 @@ describe('mapping input', () => {
     const result = parseDelimited('current,new\n"old, one.txt","new ""one"".txt"');
     expect(result.errors).toEqual([]);
     expect(result.rows[0]).toMatchObject({ current: 'old, one.txt', next: 'new "one".txt' });
+  });
+
+  it('preserves significant whitespace inside quoted filenames', () => {
+    const result = parseDelimited('current,new\na.txt,"bad "');
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]).toMatchObject({ current: 'a.txt', next: 'bad ' });
+    expect(analyze(result.rows, assumptions).findings.map((finding) => finding.code)).toContain('trailing-character');
   });
 
   it('reports malformed and short records', () => {
@@ -55,9 +66,29 @@ describe('safety review', () => {
     expect(codes).toEqual(expect.arrayContaining(['path-traversal', 'absolute-path', 'invalid-character', 'unicode-collision']));
   });
 
+  it('blocks sources outside the reviewed root and Windows backslash absolute targets', () => {
+    const review = analyze([
+      row('/tmp/outside.txt', 'safe-a.txt', 1),
+      row('../outside.txt', 'safe-b.txt', 2),
+      row('inside.txt', 'C:\\outside\\bad.txt', 3)
+    ], assumptions);
+    expect(review.findings.map((finding) => finding.code)).toEqual(expect.arrayContaining([
+      'source-absolute-path',
+      'source-path-traversal',
+      'absolute-path'
+    ]));
+    expect(review.safe).toBe(false);
+  });
+
   it('blocks a destination nested under another moving source', () => {
     const review = analyze([row('folder', 'archive', 1), row('photo.jpg', 'folder/photo.jpg', 2)], assumptions);
     expect(review.findings.map((finding) => finding.code)).toContain('moving-parent');
+  });
+
+  it('uses filesystem assumptions when finding a moving parent', () => {
+    const review = analyze([row('Folder', 'Archive', 1), row('other.txt', 'folder/other.txt', 2)], assumptions);
+    expect(review.findings.map((finding) => finding.code)).toContain('moving-parent');
+    expect(review.safe).toBe(false);
   });
 
   it('reviews 1,000 safe mappings and stages unique names', () => {
@@ -81,10 +112,32 @@ describe('reversible exports', () => {
     expect(shellPlan([row('a.txt', 'folder/b.txt', 1)], assumptions, true)).toContain('Destination folder is missing');
   });
 
+  it('executes dry and live same-folder swaps without inventing destination folders', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'rpr-export-'));
+    try {
+      writeFileSync(join(directory, "a's file.txt"), 'first');
+      writeFileSync(join(directory, 'b.txt'), 'second');
+      const dryPath = join(directory, 'dry.sh');
+      writeFileSync(dryPath, shellPlan(swap, assumptions, false));
+      const dryOutput = execFileSync('/bin/sh', [dryPath], { cwd: directory, encoding: 'utf8' });
+      expect(dryOutput).toContain('Dry run only. 2 renames would be applied.');
+      expect(readFileSync(join(directory, "a's file.txt"), 'utf8')).toBe('first');
+      const livePath = join(directory, 'live.sh');
+      writeFileSync(livePath, shellPlan(swap, assumptions, true));
+      const liveOutput = execFileSync('/bin/sh', [livePath], { cwd: directory, encoding: 'utf8' });
+      expect(liveOutput).toContain('Applied 2 renames.');
+      expect(readFileSync(join(directory, "a's file.txt"), 'utf8')).toBe('second');
+      expect(readFileSync(join(directory, 'b.txt'), 'utf8')).toBe('first');
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it('uses literal PowerShell paths and defaults can print only', () => {
     const script = powershellPlan(swap, assumptions, false);
     expect(script).toContain('Write-Output');
     expect(script).toContain('-LiteralPath');
     expect(script).toContain("a''s file.txt");
+    expect(script).not.toContain('Destination folder is missing');
   });
 });
